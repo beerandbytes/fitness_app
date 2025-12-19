@@ -76,8 +76,16 @@ const WelcomePage = () => {
             const hasCompletedTour = completedTours.includes('onboarding_welcome');
             
             if (!hasSeenTour && !hasCompletedTour) {
+                // Usar un pequeño delay para asegurar que el DOM esté listo
                 const timer = setTimeout(() => {
-                    setShowTour(true);
+                    // Verificar nuevamente antes de mostrar (por si cambió mientras esperábamos)
+                    const stillHasSeenTour = localStorage.getItem('onboarding_tour_completed');
+                    const stillCompletedTours = JSON.parse(localStorage.getItem('completed_tours') || '[]');
+                    const stillHasCompletedTour = stillCompletedTours.includes('onboarding_welcome');
+                    
+                    if (!stillHasSeenTour && !stillHasCompletedTour) {
+                        setShowTour(true);
+                    }
                 }, 1000);
                 return () => clearTimeout(timer);
             }
@@ -374,10 +382,22 @@ const WelcomePage = () => {
                         onComplete={() => {
                             setShowTour(false);
                             localStorage.setItem('onboarding_tour_completed', 'true');
+                            // También marcar en completed_tours para consistencia
+                            const completedTours = JSON.parse(localStorage.getItem('completed_tours') || '[]');
+                            if (!completedTours.includes('onboarding_welcome')) {
+                                completedTours.push('onboarding_welcome');
+                                localStorage.setItem('completed_tours', JSON.stringify(completedTours));
+                            }
                         }}
                         onSkip={() => {
                             setShowTour(false);
                             localStorage.setItem('onboarding_tour_completed', 'true');
+                            // También marcar en completed_tours para consistencia
+                            const completedTours = JSON.parse(localStorage.getItem('completed_tours') || '[]');
+                            if (!completedTours.includes('onboarding_welcome')) {
+                                completedTours.push('onboarding_welcome');
+                                localStorage.setItem('completed_tours', JSON.stringify(completedTours));
+                            }
                         }}
                         autoStart={true}
                     />

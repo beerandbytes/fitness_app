@@ -71,62 +71,67 @@ const WorkoutTimer = ({
 
   // Efecto del temporizador
   useEffect(() => {
-    if (isRunning && timeRemaining > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            setIsRunning(false);
-            
-            if (isResting) {
-              // Descanso completado
-              playSound();
-              vibrate([100, 50, 100]);
-              announceToScreenReader('Descanso completado. Comienza el ejercicio.');
-              if (onRestComplete) {
-                onRestComplete();
-              }
-              setIsResting(false);
-              setTimeRemaining(exerciseDuration);
-            } else {
-              // Ejercicio completado
-              playSound();
-              vibrate([200, 100, 200]);
-              announceToScreenReader('Ejercicio completado. Inicia el descanso.');
-              if (onComplete) {
-                onComplete();
-              }
-              setIsResting(true);
-              setTimeRemaining(restDuration);
-            }
-            return 0;
-          }
-          
-          // Anunciar cada 10 segundos o en los últimos 5 segundos
-          if (prev % 10 === 0 || prev <= 5) {
-            announceToScreenReader(`${prev} segundos restantes`);
-          }
-          
-          // Sonido y vibración en últimos 3 segundos
-          if (prev <= 3) {
-            playSound();
-            vibrate([50]);
-          }
-          
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
+    if (!isRunning) {
+      // Limpiar intervalo si no está corriendo
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
+      return;
     }
+
+    // Crear intervalo solo cuando isRunning es true
+    intervalRef.current = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          setIsRunning(false);
+          
+          if (isResting) {
+            // Descanso completado
+            playSound();
+            vibrate([100, 50, 100]);
+            announceToScreenReader('Descanso completado. Comienza el ejercicio.');
+            if (onRestComplete) {
+              onRestComplete();
+            }
+            setIsResting(false);
+            return exerciseDuration;
+          } else {
+            // Ejercicio completado
+            playSound();
+            vibrate([200, 100, 200]);
+            announceToScreenReader('Ejercicio completado. Inicia el descanso.');
+            if (onComplete) {
+              onComplete();
+            }
+            setIsResting(true);
+            return restDuration;
+          }
+        }
+        
+        // Anunciar cada 10 segundos o en los últimos 5 segundos
+        if (prev % 10 === 0 || prev <= 5) {
+          announceToScreenReader(`${prev} segundos restantes`);
+        }
+        
+        // Sonido y vibración en últimos 3 segundos
+        if (prev <= 3) {
+          playSound();
+          vibrate([50]);
+        }
+        
+        return prev - 1;
+      });
+    }, 1000);
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
-  }, [isRunning, timeRemaining, isResting, exerciseDuration, restDuration, onComplete, onRestComplete]);
+  }, [isRunning, isResting, exerciseDuration, restDuration, onComplete, onRestComplete]);
+  // timeRemaining removido de dependencias para evitar recreación constante del intervalo
   // playSound está definido dentro del componente y no cambia, no necesita estar en dependencias
 
   const handleStart = () => {

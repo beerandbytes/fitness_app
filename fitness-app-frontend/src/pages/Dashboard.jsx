@@ -149,7 +149,9 @@ const Dashboard = () => {
         if (log && goal) {
             fetchComparisons();
         }
-    }, [log, goal, fetchComparisons]);
+        // fetchComparisons está memoizado con useCallback y sus dependencias son estables
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [log, goal]); // Removido fetchComparisons de dependencias para evitar bucles
 
     const totalMacros = mealItems.reduce((acc, item) => {
         if (!item || !item.food) return acc;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * Hook para debounce de valores
@@ -25,19 +25,36 @@ export const useDebounce = (value, delay = 500) => {
 
 /**
  * Hook para debounce de funciones
+ * Usa useRef para evitar recrear el callback en cada render
  */
 export const useDebouncedCallback = (callback, delay = 500) => {
-  const [debouncedCallback, setDebouncedCallback] = useState(() => callback);
+  const callbackRef = useRef(callback);
+  const timeoutRef = useRef(null);
 
+  // Actualizar la referencia del callback siempre
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedCallback(() => callback);
-    }, delay);
+    callbackRef.current = callback;
+  }, [callback]);
 
+  // Función debounced que usa la referencia más reciente
+  const debouncedCallback = useCallback((...args) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      callbackRef.current(...args);
+    }, delay);
+  }, [delay]);
+
+  // Limpiar timeout al desmontar
+  useEffect(() => {
     return () => {
-      clearTimeout(handler);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
-  }, [callback, delay]);
+  }, []);
 
   return debouncedCallback;
 };

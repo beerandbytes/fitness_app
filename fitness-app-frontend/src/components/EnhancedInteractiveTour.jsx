@@ -19,6 +19,8 @@ const EnhancedInteractiveTour = ({
     const timeoutRef = useRef(null);
     const rafRef = useRef(null);
     const isUpdatingRef = useRef(false);
+    const scrollTimeoutRef = useRef(null);
+    const resizeTimeoutRef = useRef(null);
 
     // Verificar si el tour ya fue completado
     useEffect(() => {
@@ -29,34 +31,6 @@ const EnhancedInteractiveTour = ({
             }
         }
     }, [tourId]);
-
-    // Función para actualizar posición usando requestAnimationFrame para mejor rendimiento
-    const updatePosition = useCallback(() => {
-        if (isUpdatingRef.current) return;
-        
-        const step = steps[currentStep];
-        if (!step || !step.target) return;
-
-        const currentElement = elementRef.current || (typeof step.target === 'string' 
-            ? document.querySelector(step.target)
-            : step.target);
-            
-        if (currentElement) {
-            elementRef.current = currentElement;
-            isUpdatingRef.current = true;
-            
-            rafRef.current = requestAnimationFrame(() => {
-                const rect = currentElement.getBoundingClientRect();
-                setTargetRect({
-                    left: rect.left + window.scrollX,
-                    top: rect.top + window.scrollY,
-                    width: rect.width,
-                    height: rect.height,
-                });
-                isUpdatingRef.current = false;
-            });
-        }
-    }, [currentStep, steps]);
 
     // Encontrar y seguir el elemento objetivo
     useEffect(() => {
@@ -72,6 +46,38 @@ const EnhancedInteractiveTour = ({
             setTargetRect(null);
             return;
         }
+
+        // Función para actualizar posición usando requestAnimationFrame para mejor rendimiento
+        const updatePosition = () => {
+            if (isUpdatingRef.current) return;
+            
+            if (!step || !step.target) return;
+
+            const currentElement = elementRef.current || (typeof step.target === 'string' 
+                ? document.querySelector(step.target)
+                : step.target);
+                
+            if (currentElement) {
+                elementRef.current = currentElement;
+                isUpdatingRef.current = true;
+                
+                // Cancelar cualquier RAF pendiente
+                if (rafRef.current) {
+                    cancelAnimationFrame(rafRef.current);
+                }
+                
+                rafRef.current = requestAnimationFrame(() => {
+                    const rect = currentElement.getBoundingClientRect();
+                    setTargetRect({
+                        left: rect.left + window.scrollX,
+                        top: rect.top + window.scrollY,
+                        width: rect.width,
+                        height: rect.height,
+                    });
+                    isUpdatingRef.current = false;
+                });
+            }
+        };
 
         let retryCount = 0;
         const maxRetries = 10;
@@ -98,21 +104,19 @@ const EnhancedInteractiveTour = ({
         findElement();
 
         // Throttle de eventos de scroll y resize para mejor rendimiento
-        let scrollTimeout = null;
         const handleScroll = () => {
-            if (scrollTimeout) return;
-            scrollTimeout = setTimeout(() => {
+            if (scrollTimeoutRef.current) return;
+            scrollTimeoutRef.current = setTimeout(() => {
                 updatePosition();
-                scrollTimeout = null;
+                scrollTimeoutRef.current = null;
             }, 16); // ~60fps
         };
 
-        let resizeTimeout = null;
         const handleResize = () => {
-            if (resizeTimeout) return;
-            resizeTimeout = setTimeout(() => {
+            if (resizeTimeoutRef.current) return;
+            resizeTimeoutRef.current = setTimeout(() => {
                 updatePosition();
-                resizeTimeout = null;
+                resizeTimeoutRef.current = null;
             }, 100);
         };
 
@@ -122,20 +126,25 @@ const EnhancedInteractiveTour = ({
         return () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
             }
             if (rafRef.current) {
                 cancelAnimationFrame(rafRef.current);
+                rafRef.current = null;
             }
-            if (scrollTimeout) {
-                clearTimeout(scrollTimeout);
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+                scrollTimeoutRef.current = null;
             }
-            if (resizeTimeout) {
-                clearTimeout(resizeTimeout);
+            if (resizeTimeoutRef.current) {
+                clearTimeout(resizeTimeoutRef.current);
+                resizeTimeoutRef.current = null;
             }
             window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', handleResize);
+            isUpdatingRef.current = false;
         };
-    }, [isActive, currentStep, steps, updatePosition]);
+    }, [isActive, currentStep, steps]);
 
     if (!isActive || !steps || steps.length === 0) {
         return null;

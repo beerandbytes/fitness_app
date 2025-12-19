@@ -15,9 +15,11 @@ const NotificationsBell = React.memo(() => {
     useEffect(() => {
         fetchNotifications();
         // Refrescar cada 30 segundos
-        const interval = setInterval(fetchNotifications, 30000);
+        const interval = setInterval(() => {
+            fetchNotifications();
+        }, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, []); // fetchNotifications no necesita estar en dependencias porque usa setState de forma segura
 
     // Cerrar dropdown al hacer click fuera
     useEffect(() => {
