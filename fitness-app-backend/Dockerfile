@@ -64,6 +64,9 @@ COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nodejs:nodejs /app/drizzle ./drizzle
 COPY --from=builder --chown=nodejs:nodejs /app/docker-entrypoint.sh ./
 
+# Crear directorio de logs con permisos correctos antes de cambiar a usuario no-root
+RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app/logs
+
 # Cambiar a usuario no-root
 USER nodejs
 
