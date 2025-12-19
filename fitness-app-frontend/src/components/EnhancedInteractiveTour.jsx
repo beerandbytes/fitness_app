@@ -220,14 +220,8 @@ const EnhancedInteractiveTour = ({
         };
     }, [isActive, currentStep, memoizedSteps]); // Usar memoizedSteps en lugar de steps
 
-    // Log cuando targetRect cambia para detectar loops de actualización
-    useEffect(() => {
-        if (targetRect) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:165',message:'targetRect state updated',data:{targetRect},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
-        }
-    }, [targetRect]);
+    // ELIMINADO: useEffect que escuchaba targetRect causaba loops infinitos
+    // Ya no necesitamos este efecto ya que targetRect solo se usa para renderizar
 
     if (!isActive || !memoizedSteps || memoizedSteps.length === 0) {
         return null;

@@ -22,19 +22,34 @@ const ValidatedInput = ({
   const [isValid, setIsValid] = useState(null);
   const [isTouched, setIsTouched] = useState(false);
   const [message, setMessage] = useState('');
+  const lastValidatedValueRef = React.useRef(value);
+  const validationTimeoutRef = React.useRef(null);
 
   useEffect(() => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:26',message:'validation useEffect triggered',data:{value,isTouched,hasValue:!!value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:26',message:'validation useEffect triggered',data:{value,isTouched,hasValue:!!value,lastValidated:lastValidatedValueRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
+    
+    // Evitar validación si el valor no ha cambiado realmente (previene loops infinitos)
+    if (lastValidatedValueRef.current === value && isValid !== null) {
+      return;
+    }
+    
+    // Limpiar timeout anterior si existe
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+      validationTimeoutRef.current = null;
+    }
+
     if (!isTouched || !value) {
-      // Usar setTimeout para evitar setState síncrono en efecto
-      setTimeout(() => {
+      // Usar setTimeout para evitar setState síncrono en efecto, pero solo si el valor realmente cambió
+      validationTimeoutRef.current = setTimeout(() => {
         setIsValid(null);
         setMessage('');
         if (onValidation) {
           onValidation(null, '');
         }
+        lastValidatedValueRef.current = value;
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:31',message:'validation cleared',data:{value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
@@ -46,6 +61,7 @@ const ValidatedInput = ({
       const result = validator(value);
       setIsValid(result.valid);
       setMessage(result.message || '');
+      lastValidatedValueRef.current = value;
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:41',message:'validation result',data:{value,isValid:result.valid,hasMessage:!!result.message,messageLength:result.message?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
       // #endregion
@@ -53,6 +69,13 @@ const ValidatedInput = ({
         onValidation(result.valid, result.message);
       }
     }
+    
+    return () => {
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+        validationTimeoutRef.current = null;
+      }
+    };
     // onValidation puede cambiar en cada render, pero es una función callback
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, validator, isTouched]);
