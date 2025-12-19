@@ -4,45 +4,50 @@ services:
   # Base de datos PostgreSQL
   postgres:
     image: postgres:16-alpine
-    container_name: fitness-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-fitnessdb}
       POSTGRES_USER: ${POSTGRES_USER:-fitnessuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fitnesspass}
-    # Note: For production, set POSTGRES_PASSWORD via .env file or environment variables
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fitnessuser} -d ${POSTGRES_DB:-fitnessdb}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - fitness-network
 
   # Backend API
   backend:
     build:
       context: ./fitness-app-backend
       dockerfile: Dockerfile
-    container_name: fitness-backend
     ports:
-      - "4000:4000"
+      - "${BACKEND_PORT:-4000}:4000"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-fitnessuser}:${POSTGRES_PASSWORD:-fitnesspass}@postgres:5432/${POSTGRES_DB:-fitnessdb}
-      JWT_SECRET: ${JWT_SECRET:-desarrollo_jwt_secret_minimo_32_caracteres_para_seguridad}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
-    # Note: For production, set JWT_SECRET and POSTGRES_PASSWORD via .env file or environment variables
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fitnessuser}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-fitnessdb}
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      # Variables opcionales de SMTP
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      # Montar el código para desarrollo (hot reload)
-      - ./fitness-app-backend:/app
-      - /app/node_modules
     restart: unless-stopped
+    networks:
+      - fitness-network
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -56,14 +61,27 @@ services:
       context: ./fitness-app-frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://localhost:4000/api
-    container_name: fitness-frontend
+        VITE_API_URL: ${VITE_API_URL}
     ports:
-      - "5173:80"
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
+    networks:
+      - fitness-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 volumes:
   postgres_data:
+    driver: local
+
+networks:
+  fitness-network:
+    driver: bridge
 

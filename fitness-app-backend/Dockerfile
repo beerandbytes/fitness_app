@@ -5,8 +5,12 @@
 # Actualizado a Node.js 24.x (LTS 2025) para seguridad y compatibilidad
 FROM node:24-alpine AS deps
 
-# Instalar dependencias del sistema necesarias
-RUN apk add --no-cache bash
+# Instalar dependencias del sistema necesarias para compilación de módulos nativos (bcrypt, etc.)
+RUN apk add --no-cache \
+    bash \
+    python3 \
+    make \
+    g++
 
 WORKDIR /app
 
@@ -16,8 +20,9 @@ COPY package.json package-lock.json* ./
 # Verificar que package.json existe
 RUN test -f package.json || (echo "ERROR: package.json not found!" && exit 1)
 
-# Instalar dependencias de producción
-RUN npm ci --omit=dev --ignore-scripts && \
+# Instalar todas las dependencias (incluyendo dev para herramientas de build)
+# No usar --ignore-scripts porque bcrypt necesita compilar módulos nativos
+RUN npm ci && \
     npm cache clean --force
 
 # Stage 2: Builder (si necesitas compilar algo)
