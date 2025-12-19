@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useBrandStore from '../stores/useBrandStore';
 import useToastStore from '../stores/useToastStore';
@@ -371,13 +371,13 @@ const WelcomePage = () => {
                 {/* Tour Interactivo */}
                 {showTour && currentStep === 1 && (
                     <EnhancedInteractiveTour
-                        steps={[
+                        steps={useMemo(() => [
                             {
                                 target: '.welcome-hero-icon',
                                 title: '¡Bienvenido!',
                                 content: 'Completa estos sencillos pasos para configurar tu perfil y empezar tu viaje hacia una vida más saludable.',
                             },
-                        ]}
+                        ], [])}
                         tourId="onboarding_welcome"
                         onComplete={() => {
                             setShowTour(false);

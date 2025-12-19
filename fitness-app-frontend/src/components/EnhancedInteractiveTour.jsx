@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { X, ChevronRight, ChevronLeft, Check } from 'lucide-react';
 
 /**
@@ -21,6 +21,10 @@ const EnhancedInteractiveTour = ({
     const isUpdatingRef = useRef(false);
     const scrollTimeoutRef = useRef(null);
     const resizeTimeoutRef = useRef(null);
+    
+    // Memoizar steps para evitar recreación constante del useEffect
+    const stepsString = useMemo(() => JSON.stringify(steps), [steps]);
+    const memoizedSteps = useMemo(() => steps, [stepsString]);
 
     // Verificar si el tour ya fue completado
     useEffect(() => {
@@ -34,13 +38,13 @@ const EnhancedInteractiveTour = ({
 
     // Encontrar y seguir el elemento objetivo
     useEffect(() => {
-        if (!isActive || !steps || steps.length === 0) {
+        if (!isActive || !memoizedSteps || memoizedSteps.length === 0) {
             elementRef.current = null;
             setTargetRect(null);
             return;
         }
 
-        const step = steps[currentStep];
+        const step = memoizedSteps[currentStep];
         if (!step || !step.target) {
             elementRef.current = null;
             setTargetRect(null);
@@ -68,11 +72,22 @@ const EnhancedInteractiveTour = ({
                 
                 rafRef.current = requestAnimationFrame(() => {
                     const rect = currentElement.getBoundingClientRect();
-                    setTargetRect({
+                    const newRect = {
                         left: rect.left + window.scrollX,
                         top: rect.top + window.scrollY,
                         width: rect.width,
                         height: rect.height,
+                    };
+                    
+                    // Solo actualizar si el rect cambió significativamente (más de 1px)
+                    setTargetRect(prev => {
+                        if (!prev) return newRect;
+                        const diff = Math.abs(prev.left - newRect.left) + 
+                                    Math.abs(prev.top - newRect.top) + 
+                                    Math.abs(prev.width - newRect.width) + 
+                                    Math.abs(prev.height - newRect.height);
+                        // Solo actualizar si hay un cambio significativo
+                        return diff > 1 ? newRect : prev;
                     });
                     isUpdatingRef.current = false;
                 });
@@ -144,13 +159,13 @@ const EnhancedInteractiveTour = ({
             window.removeEventListener('resize', handleResize);
             isUpdatingRef.current = false;
         };
-    }, [isActive, currentStep, steps]);
+    }, [isActive, currentStep, memoizedSteps]); // Usar memoizedSteps en lugar de steps
 
-    if (!isActive || !steps || steps.length === 0) {
+    if (!isActive || !memoizedSteps || memoizedSteps.length === 0) {
         return null;
     }
 
-    const step = steps[currentStep];
+    const step = memoizedSteps[currentStep];
     if (!step) return null;
 
     const isFirst = currentStep === 0;
@@ -252,7 +267,7 @@ const EnhancedInteractiveTour = ({
                                 {currentStep + 1}
                             </div>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {currentStep + 1} de {steps.length}
+                                {currentStep + 1} de {memoizedSteps.length}
                             </span>
                         </div>
                         {step.title && (
