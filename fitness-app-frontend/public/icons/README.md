@@ -1,30 +1,62 @@
-# PWA Icons
+# Iconos PWA
 
-This directory should contain PWA icons for all platforms and sizes.
+Este directorio contiene los iconos necesarios para la Progressive Web App (PWA).
 
-## Required Icon Sizes
+## ⚠️ Iconos Faltantes
 
-- 72x72.png - Android
-- 96x96.png - Android
-- 128x128.png - Android
-- 144x144.png - Windows
-- 152x152.png - iOS
-- 192x192.png - Android (required)
-- 384x384.png - Android
-- 512x512.png - Android (required)
-- icon-maskable-192x192.png - Android maskable icon
-- icon-maskable-512x512.png - Android maskable icon
+Actualmente los iconos no están generados. Esto causa errores 404 en la consola del navegador.
 
-## Icon Generation
+## 🚀 Soluciones Rápidas
 
-To generate icons, you can use:
-- Online tools like https://realfavicongenerator.net/
-- PWA Builder: https://www.pwabuilder.com/imageGenerator
-- ImageMagick or similar tools
+### Opción 1: Generador HTML (Más Fácil - Sin Instalación)
 
-The base icon should be at least 512x512 pixels and should work well at smaller sizes.
+1. Abre el archivo `create-placeholder-icons.html` en tu navegador
+2. Haz clic en "Generar Todos los Iconos"
+3. Haz clic en "Descargar Todos"
+4. Guarda todos los archivos descargados en esta carpeta (`public/icons/`)
 
-## Current Status
+### Opción 2: Script Node.js (Requiere sharp)
 
-Icons are currently using placeholder paths. Replace with actual generated icons.
+```bash
+# Instalar sharp
+npm install sharp
 
+# Generar iconos
+npm run generate-icons
+```
+
+### Opción 3: Herramientas Online
+
+1. **PWA Builder Image Generator**: https://www.pwabuilder.com/imageGenerator
+   - Sube una imagen de 512x512px o más
+   - Descarga todos los tamaños generados
+   - Colócalos en esta carpeta
+
+2. **RealFaviconGenerator**: https://realfavicongenerator.net/
+   - Sube tu logo/imagen
+   - Configura los tamaños necesarios
+   - Descarga y coloca en esta carpeta
+
+## 📋 Tamaños Requeridos
+
+- `icon-72x72.png` - Android
+- `icon-96x96.png` - Android
+- `icon-128x128.png` - Android
+- `icon-144x144.png` - Windows (⚠️ Este es el que está causando el error 404)
+- `icon-152x152.png` - iOS
+- `icon-192x192.png` - Android (requerido)
+- `icon-384x384.png` - Android
+- `icon-512x512.png` - Android (requerido)
+- `icon-maskable-192x192.png` - Android maskable
+- `icon-maskable-512x512.png` - Android maskable
+
+## 🎨 Diseño Sugerido
+
+- **Color primario**: #D45A0F (naranja)
+- **Color secundario**: #FF6D1F (naranja claro)
+- **Fondo**: Gradiente naranja
+- **Icono**: Puede ser una "F" estilizada, un logo de fitness, o un ícono de pesas
+
+## ✅ Verificación
+
+Una vez que los iconos estén creados, el error 404 desaparecerá y la PWA estará completamente funcional.

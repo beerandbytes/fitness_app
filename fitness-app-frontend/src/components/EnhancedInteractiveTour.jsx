@@ -21,6 +21,7 @@ const EnhancedInteractiveTour = ({
     const isUpdatingRef = useRef(false);
     const scrollTimeoutRef = useRef(null);
     const resizeTimeoutRef = useRef(null);
+    const resizeObserverRef = useRef(null);
     
     // Memoizar steps para evitar recreación constante del useEffect
     const stepsString = useMemo(() => JSON.stringify(steps), [steps]);
@@ -53,6 +54,9 @@ const EnhancedInteractiveTour = ({
 
         // Función para actualizar posición usando requestAnimationFrame para mejor rendimiento
         const updatePosition = () => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:55',message:'updatePosition called',data:{isUpdating:isUpdatingRef.current,hasElement:!!elementRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
             if (isUpdatingRef.current) return;
             
             if (!step || !step.target) return;
@@ -79,17 +83,28 @@ const EnhancedInteractiveTour = ({
                         height: rect.height,
                     };
                     
-                    // Solo actualizar si el rect cambió significativamente (más de 1px)
+                    // Solo actualizar si el rect cambió significativamente (más de 2px para evitar micro-updates)
                     setTargetRect(prev => {
-                        if (!prev) return newRect;
+                        if (!prev) {
+                            // #region agent log
+                            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:83',message:'setTargetRect first update',data:{newRect},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                            // #endregion
+                            return newRect;
+                        }
                         const diff = Math.abs(prev.left - newRect.left) + 
                                     Math.abs(prev.top - newRect.top) + 
                                     Math.abs(prev.width - newRect.width) + 
                                     Math.abs(prev.height - newRect.height);
-                        // Solo actualizar si hay un cambio significativo
-                        return diff > 1 ? newRect : prev;
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:90',message:'setTargetRect diff check',data:{diff,prev,newRect,willUpdate:diff>2},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                        // #endregion
+                        // Solo actualizar si hay un cambio significativo (aumentado a 2px para evitar micro-updates que causan loops)
+                        return diff > 2 ? newRect : prev;
                     });
                     isUpdatingRef.current = false;
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:92',message:'updatePosition RAF complete',data:{newRect},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                    // #endregion
                 });
             }
         };
@@ -105,6 +120,19 @@ const EnhancedInteractiveTour = ({
             if (element) {
                 elementRef.current = element;
                 updatePosition();
+                
+                // Configurar ResizeObserver después de encontrar el elemento
+                if (typeof ResizeObserver !== 'undefined' && !resizeObserverRef.current) {
+                    resizeObserverRef.current = new ResizeObserver(() => {
+                        // Throttle las actualizaciones del ResizeObserver
+                        if (resizeTimeoutRef.current) return;
+                        resizeTimeoutRef.current = setTimeout(() => {
+                            updatePosition();
+                            resizeTimeoutRef.current = null;
+                        }, 150);
+                    });
+                    resizeObserverRef.current.observe(element);
+                }
             } else {
                 retryCount++;
                 if (retryCount < maxRetries) {
@@ -120,6 +148,9 @@ const EnhancedInteractiveTour = ({
 
         // Throttle de eventos de scroll y resize para mejor rendimiento
         const handleScroll = () => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:122',message:'handleScroll triggered',data:{hasTimeout:!!scrollTimeoutRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
             if (scrollTimeoutRef.current) return;
             scrollTimeoutRef.current = setTimeout(() => {
                 updatePosition();
@@ -127,16 +158,20 @@ const EnhancedInteractiveTour = ({
             }, 16); // ~60fps
         };
 
-        const handleResize = () => {
+        const handleWindowResize = () => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:130',message:'handleResize triggered',data:{hasTimeout:!!resizeTimeoutRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
             if (resizeTimeoutRef.current) return;
+            // Aumentar el throttle a 200ms para reducir actualizaciones frecuentes durante cambios de input
             resizeTimeoutRef.current = setTimeout(() => {
                 updatePosition();
                 resizeTimeoutRef.current = null;
-            }, 100);
+            }, 200);
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
-        window.addEventListener('resize', handleResize, { passive: true });
+        window.addEventListener('resize', handleWindowResize, { passive: true });
 
         return () => {
             if (timeoutRef.current) {
@@ -155,11 +190,24 @@ const EnhancedInteractiveTour = ({
                 clearTimeout(resizeTimeoutRef.current);
                 resizeTimeoutRef.current = null;
             }
+            if (resizeObserverRef.current) {
+                resizeObserverRef.current.disconnect();
+                resizeObserverRef.current = null;
+            }
             window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('resize', handleWindowResize);
             isUpdatingRef.current = false;
         };
     }, [isActive, currentStep, memoizedSteps]); // Usar memoizedSteps en lugar de steps
+
+    // Log cuando targetRect cambia para detectar loops de actualización
+    useEffect(() => {
+        if (targetRect) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:165',message:'targetRect state updated',data:{targetRect},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+        }
+    }, [targetRect]);
 
     if (!isActive || !memoizedSteps || memoizedSteps.length === 0) {
         return null;
@@ -225,27 +273,32 @@ const EnhancedInteractiveTour = ({
             {targetRect ? (
                 <>
                     <div
-                        className="fixed inset-0 z-[9998] backdrop-blur-sm transition-opacity duration-300"
+                        className="fixed inset-0 z-[9998] backdrop-blur-sm"
                         style={{
                             background: `radial-gradient(ellipse ${Math.max(targetRect.width + 32, 100)}px ${Math.max(targetRect.height + 32, 100)}px at ${targetRect.left + targetRect.width / 2}px ${targetRect.top + targetRect.height / 2}px, transparent 0%, transparent 35%, rgba(0, 0, 0, 0.6) 70%)`,
+                            transition: 'none', // Deshabilitar transiciones para evitar loops en Docker
                         }}
                         onClick={handleSkip}
                         aria-hidden="true"
                     />
                     {/* Borde del elemento */}
                     <div
-                        className="fixed z-[9999] border-4 border-blue-500 rounded-lg pointer-events-none shadow-2xl transition-all duration-200"
+                        className="fixed z-[9999] border-4 border-blue-500 rounded-lg pointer-events-none shadow-2xl"
                         style={{
                             left: `${targetRect.left - 4}px`,
                             top: `${targetRect.top - 4}px`,
                             width: `${targetRect.width + 8}px`,
                             height: `${targetRect.height + 8}px`,
+                            transition: 'none', // Deshabilitar transiciones para evitar loops en Docker
                         }}
                     />
                 </>
             ) : (
                 <div
-                    className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+                    className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm"
+                    style={{
+                        transition: 'none', // Deshabilitar transiciones para evitar loops en Docker
+                    }}
                     onClick={handleSkip}
                     aria-hidden="true"
                 />
@@ -253,8 +306,11 @@ const EnhancedInteractiveTour = ({
 
             {/* Tooltip */}
             <div
-                className="fixed z-[10000] max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 p-6 transition-all duration-300"
-                style={tooltipPosition}
+                className="fixed z-[10000] max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 p-6"
+                style={{
+                    ...tooltipPosition,
+                    transition: 'none', // Deshabilitar transiciones para evitar loops en Docker
+                }}
                 role="dialog"
                 aria-labelledby="tour-title"
                 aria-describedby="tour-description"

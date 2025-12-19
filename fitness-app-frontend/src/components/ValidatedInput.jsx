@@ -24,6 +24,9 @@ const ValidatedInput = ({
   const [message, setMessage] = useState('');
 
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:26',message:'validation useEffect triggered',data:{value,isTouched,hasValue:!!value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     if (!isTouched || !value) {
       // Usar setTimeout para evitar setState síncrono en efecto
       setTimeout(() => {
@@ -32,6 +35,9 @@ const ValidatedInput = ({
         if (onValidation) {
           onValidation(null, '');
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:31',message:'validation cleared',data:{value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
       }, 0);
       return;
     }
@@ -40,7 +46,9 @@ const ValidatedInput = ({
       const result = validator(value);
       setIsValid(result.valid);
       setMessage(result.message || '');
-      
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:41',message:'validation result',data:{value,isValid:result.valid,hasMessage:!!result.message,messageLength:result.message?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       if (onValidation) {
         onValidation(result.valid, result.message);
       }
@@ -54,6 +62,9 @@ const ValidatedInput = ({
   };
 
   const handleChange = (e) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:56',message:'input change',data:{newValue:e.target.value,oldValue:value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     setIsTouched(true);
     onChange(e);
   };
