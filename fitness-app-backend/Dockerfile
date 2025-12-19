@@ -55,6 +55,7 @@ WORKDIR /app
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
 COPY --from=builder --chown=nodejs:nodejs /app/index.js ./
+COPY --from=builder --chown=nodejs:nodejs /app/socketServer.js ./
 COPY --from=builder --chown=nodejs:nodejs /app/db ./db
 COPY --from=builder --chown=nodejs:nodejs /app/routes ./routes
 COPY --from=builder --chown=nodejs:nodejs /app/middleware ./middleware
