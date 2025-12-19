@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { AppLayout } from '@/app/layout/AppLayout';
 import { PageContainer } from '@/shared/components/layout/PageContainer';
 import CalorieRadialChart from '../components/CalorieRadialChart';
@@ -28,7 +28,8 @@ const DietPage = () => {
     const [goal, setGoal] = useState(null);
     const [loading, setLoading] = useState(true);
     
-    const formattedDate = format(currentDate, 'yyyy-MM-dd');
+    // Memoizar formattedDate para evitar recreación en cada render
+    const formattedDate = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
 
     const fetchDailyLog = useCallback(async () => {
         try {
@@ -98,7 +99,8 @@ const DietPage = () => {
         ? parseFloat(goal.daily_calorie_goal) 
         : 2000; // Valor por defecto si no hay objetivo
 
-    const formattedDateLabel = format(currentDate, 'EEEE, d MMMM yyyy', { locale: es });
+    // Memoizar formattedDateLabel para evitar recreación en cada render
+    const formattedDateLabel = useMemo(() => format(currentDate, 'EEEE, d MMMM yyyy', { locale: es }), [currentDate]);
 
     return (
         <AppLayout>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ModernNavbar from '../components/ModernNavbar';
 import BottomNavigation from '../components/BottomNavigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,11 +38,7 @@ const ProgressPage = () => {
         notes: '',
     });
 
-    useEffect(() => {
-        loadData();
-    }, [activeTab]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
             const [measurementsRes, photosRes, analyticsRes] = await Promise.all([
@@ -59,7 +55,11 @@ const ProgressPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [activeTab, loadData]);
 
     const handleSaveMeasurement = async (e) => {
         e.preventDefault();

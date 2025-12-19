@@ -45,7 +45,7 @@ const RoutineDetailPage = () => {
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const dayNamesShort = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-    const fetchRoutineDetails = async () => {
+    const fetchRoutineDetails = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get(`/routines/${id}`);
@@ -60,12 +60,11 @@ const RoutineDetailPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
 
     useEffect(() => {
         fetchRoutineDetails();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id]);
+    }, [fetchRoutineDetails]);
 
     const handleExerciseSelect = (exercise) => {
         setSelectedExercise(exercise);

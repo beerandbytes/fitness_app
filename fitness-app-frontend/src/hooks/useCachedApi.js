@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import api from '../services/api';
 import apiCache from '../utils/cache';
 import logger from '../utils/logger';
@@ -29,9 +29,32 @@ export const useCachedApi = (url, options = {}) => {
 
   const cacheKey = apiCache.generateKey(url, params);
   
-  // Memoizar valores stringificados para evitar expresiones complejas en dependencias
-  const paramsString = useMemo(() => JSON.stringify(params), [params]);
-  const bodyString = useMemo(() => JSON.stringify(body), [body]);
+  // Usar refs para almacenar valores anteriores y comparar por contenido
+  const prevParamsRef = useRef(params);
+  const prevBodyRef = useRef(body);
+  const paramsStringRef = useRef(JSON.stringify(params));
+  const bodyStringRef = useRef(body ? JSON.stringify(body) : '');
+  
+  // Comparación profunda antes de recalcular strings para evitar recreaciones innecesarias
+  const paramsString = useMemo(() => {
+    const currentString = JSON.stringify(params);
+    // Solo recalcular si el contenido realmente cambió (comparación por string)
+    if (currentString !== paramsStringRef.current) {
+      prevParamsRef.current = params;
+      paramsStringRef.current = currentString;
+    }
+    return paramsStringRef.current;
+  }, [params]);
+  
+  const bodyString = useMemo(() => {
+    const currentString = body ? JSON.stringify(body) : '';
+    // Solo recalcular si el contenido realmente cambió (comparación por string)
+    if (currentString !== bodyStringRef.current) {
+      prevBodyRef.current = body;
+      bodyStringRef.current = currentString;
+    }
+    return bodyStringRef.current;
+  }, [body]);
 
   const fetchData = useCallback(async (forceRefresh = false) => {
     // Intentar obtener del caché si está habilitado y no es refresh forzado

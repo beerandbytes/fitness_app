@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { AppLayout } from '@/app/layout/AppLayout';
 import { PageContainer } from '@/shared/components/layout/PageContainer';
 import TodayTasksPanel from '../components/TodayTasksPanel';
@@ -33,7 +33,8 @@ const Dashboard = () => {
     const [goal, setGoal] = useState(null);
     const [loading, setLoading] = useState(true);
     
-    const formattedDate = format(currentDate, 'yyyy-MM-dd');
+    // Memoizar formattedDate para evitar recreación en cada render
+    const formattedDate = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
     
     const fetchDailyLog = useCallback(async () => {
         try {

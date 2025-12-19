@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { AppLayout } from '@/app/layout/AppLayout';
 import { PageContainer } from '@/shared/components/layout/PageContainer';
 import ExerciseSearchAndAdd from '../components/ExerciseSearchAndAdd';
@@ -14,7 +14,8 @@ const DailyLogPage = () => {
     const [dailyExercises, setDailyExercises] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    const formattedDate = format(currentDate, 'yyyy-MM-dd');
+    // Memoizar formattedDate para evitar recreación en cada render
+    const formattedDate = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
 
     const fetchDailyLog = useCallback(async () => {
         setLoading(true);
@@ -48,14 +49,21 @@ const DailyLogPage = () => {
     }, [fetchDailyLog]);
 
     // Optimistic update: agregar ejercicio inmediatamente cuando se registra
+    // Usar useRef para acceder al valor más reciente de log sin causar recreaciones
+    const logRef = useRef(log);
+    useEffect(() => {
+        logRef.current = log;
+    }, [log]);
+    
     const handleExerciseAddedOptimistically = useCallback((exercise) => {
         setDailyExercises(prev => [...prev, exercise]);
         // También actualizar calorías quemadas optimistamente
-        if (log) {
-            const newBurned = (parseFloat(log.burned_calories) || 0) + (parseFloat(exercise.burned_calories) || 0);
+        const currentLog = logRef.current;
+        if (currentLog) {
+            const newBurned = (parseFloat(currentLog.burned_calories) || 0) + (parseFloat(exercise.burned_calories) || 0);
             setLog(prev => ({ ...prev, burned_calories: newBurned.toFixed(2) }));
         }
-    }, [log]);
+    }, []);
 
     const totalCaloriesBurned = dailyExercises.reduce((acc, exercise) => {
         const calories = parseFloat(exercise.burned_calories);

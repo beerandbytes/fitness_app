@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { AppLayout } from '@/app/layout/AppLayout';
 import { PageContainer } from '@/shared/components/layout/PageContainer';
@@ -204,31 +204,7 @@ const ExercisesPage = () => {
 
     const exercisesPerPage = 24;
 
-    // Cargar ejercicios
-    useEffect(() => {
-        fetchExercises();
-        if (showAddToRoutineModal) {
-            fetchRoutines();
-        }
-    }, [currentPage, showAddToRoutineModal]);
-
-    // Filtrar ejercicios cuando cambian los filtros
-    useEffect(() => {
-        filterExercises();
-    }, [exercises, searchQuery, selectedCategory, selectedMuscleGroup]);
-
-    // Debug: Ver cuando cambia el estado del modal
-    // Efecto para sincronizar el estado del modal (útil para debugging si es necesario)
-    useEffect(() => {
-        // Logs de debug solo en desarrollo
-        if (process.env.NODE_ENV === 'development') {
-            // Puedes descomentar esto si necesitas debuggear el estado del modal
-            // console.log('Modal state:', { showExerciseGif, exerciseGifUrl, exerciseVideoUrl, loadingExerciseGif });
-        }
-    }, [showExerciseGif, exerciseGifUrl, exerciseVideoUrl, loadingExerciseGif]);
-
-
-    const fetchExercises = async () => {
+    const fetchExercises = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get(`/exercises?page=${currentPage}&limit=${exercisesPerPage}`);
@@ -241,9 +217,9 @@ const ExercisesPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, exercisesPerPage]);
 
-    const fetchRoutines = async () => {
+    const fetchRoutines = useCallback(async () => {
         try {
             setLoadingRoutines(true);
             const response = await api.get('/routines');
@@ -254,9 +230,9 @@ const ExercisesPage = () => {
         } finally {
             setLoadingRoutines(false);
         }
-    };
+    }, []);
 
-    const filterExercises = async () => {
+    const filterExercises = useCallback(async () => {
         let filtered = [];
 
         // Si hay una búsqueda activa (más de 2 caracteres), usar el endpoint de búsqueda
@@ -292,7 +268,30 @@ const ExercisesPage = () => {
         }
 
         setFilteredExercises(filtered);
-    };
+    }, [exercises, searchQuery, selectedCategory, selectedMuscleGroup]);
+
+    // Cargar ejercicios
+    useEffect(() => {
+        fetchExercises();
+        if (showAddToRoutineModal) {
+            fetchRoutines();
+        }
+    }, [currentPage, showAddToRoutineModal, fetchExercises, fetchRoutines]);
+
+    // Filtrar ejercicios cuando cambian los filtros
+    useEffect(() => {
+        filterExercises();
+    }, [filterExercises]);
+
+    // Debug: Ver cuando cambia el estado del modal
+    // Efecto para sincronizar el estado del modal (útil para debugging si es necesario)
+    useEffect(() => {
+        // Logs de debug solo en desarrollo
+        if (process.env.NODE_ENV === 'development') {
+            // Puedes descomentar esto si necesitas debuggear el estado del modal
+            // console.log('Modal state:', { showExerciseGif, exerciseGifUrl, exerciseVideoUrl, loadingExerciseGif });
+        }
+    }, [showExerciseGif, exerciseGifUrl, exerciseVideoUrl, loadingExerciseGif]);
 
     const handleAddToRoutine = (exercise) => {
         setSelectedExercise(exercise);

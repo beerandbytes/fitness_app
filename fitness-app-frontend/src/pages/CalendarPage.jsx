@@ -25,14 +25,16 @@ const CalendarPage = () => {
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, scheduledId: null, routineName: '' });
     const [deleting, setDeleting] = useState(false);
 
+    // Extraer valores primitivos de currentMonth para usar como dependencias estables
+    const currentYear = currentMonth.getFullYear();
+    const currentMonthNumber = currentMonth.getMonth() + 1;
+    
     // Obtener rutinas planificadas para el mes actual
     const fetchScheduledRoutines = useCallback(async () => {
         try {
             setLoading(true);
-            const year = currentMonth.getFullYear();
-            const month = currentMonth.getMonth() + 1;
             
-            const response = await api.get(`/calendar/schedule?month=${month}&year=${year}`);
+            const response = await api.get(`/calendar/schedule?month=${currentMonthNumber}&year=${currentYear}`);
             setScheduledRoutines(response.data.scheduled || []);
             
             // Verificar completitud de rutinas
@@ -44,7 +46,7 @@ const CalendarPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentMonth]);
+    }, [currentYear, currentMonthNumber]);
 
     // Obtener lista de rutinas disponibles
     const fetchRoutines = useCallback(async () => {

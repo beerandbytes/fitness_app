@@ -44,6 +44,15 @@ const Dashboard = () => {
     // Memoizar formattedDate para evitar recreación en cada render
     const formattedDate = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
     
+    // Extraer valores primitivos de log y goal para usar como dependencias estables
+    const logId = log?.id;
+    const logWeight = log?.weight;
+    const logConsumedCalories = log?.consumed_calories;
+    const goalId = goal?.id;
+    const goalTargetWeight = goal?.target_weight;
+    const goalCurrentWeight = goal?.current_weight;
+    const goalType = goal?.goal_type;
+    
     const fetchDailyLog = useCallback(async () => {
         try {
             const response = await api.get(`/logs/${formattedDate}`);
@@ -69,7 +78,29 @@ const Dashboard = () => {
     }, []);
 
     // Fetch comparaciones semanales y mensuales
+    // Usar valores primitivos en lugar de objetos completos para evitar bucles infinitos
+    // Usar useRef para acceder a los valores más recientes de log y goal
+    const logRef = useRef(log);
+    const goalRef = useRef(goal);
+    
+    // Actualizar refs cuando cambien los objetos
+    useEffect(() => {
+        logRef.current = log;
+    }, [log]);
+    
+    useEffect(() => {
+        goalRef.current = goal;
+    }, [goal]);
+    
     const fetchComparisons = useCallback(async () => {
+        // Usar los valores más recientes desde los refs
+        const currentLog = logRef.current;
+        const currentGoal = goalRef.current;
+        
+        if (!currentLog || !currentGoal) {
+            return;
+        }
+        
         try {
             const weekAgo = format(subDays(currentDate, 7), 'yyyy-MM-dd');
             const monthAgo = format(subDays(currentDate, 30), 'yyyy-MM-dd');
@@ -79,9 +110,9 @@ const Dashboard = () => {
                 const weekAgoResponse = await api.get(`/logs/${weekAgo}`);
                 const weekAgoLog = weekAgoResponse.data.log;
                 
-                if (weekAgoLog && log) {
-                    const weightDiff = parseFloat(log.weight) - parseFloat(weekAgoLog.weight);
-                    const caloriesDiff = parseFloat(log.consumed_calories) - parseFloat(weekAgoLog.consumed_calories);
+                if (weekAgoLog && currentLog) {
+                    const weightDiff = parseFloat(currentLog.weight) - parseFloat(weekAgoLog.weight);
+                    const caloriesDiff = parseFloat(currentLog.consumed_calories) - parseFloat(weekAgoLog.consumed_calories);
                     
                     setWeeklyComparison({
                         weightDiff,
@@ -98,17 +129,17 @@ const Dashboard = () => {
                 const monthAgoResponse = await api.get(`/logs/${monthAgo}`);
                 const monthAgoLog = monthAgoResponse.data.log;
                 
-                if (monthAgoLog && log && goal) {
-                    const currentWeight = parseFloat(log.weight);
+                if (monthAgoLog && currentLog && currentGoal) {
+                    const currentWeight = parseFloat(currentLog.weight);
                     const monthAgoWeight = parseFloat(monthAgoLog.weight);
-                    const targetWeight = parseFloat(goal.target_weight);
-                    const startWeight = parseFloat(goal.current_weight);
+                    const targetWeight = parseFloat(currentGoal.target_weight);
+                    const startWeight = parseFloat(currentGoal.current_weight);
                     
-                    const totalProgress = goal.goal_type === 'weight_loss'
+                    const totalProgress = currentGoal.goal_type === 'weight_loss'
                         ? (startWeight - currentWeight) / (startWeight - targetWeight) * 100
                         : (currentWeight - startWeight) / (targetWeight - startWeight) * 100;
                     
-                    const monthlyProgressValue = goal.goal_type === 'weight_loss'
+                    const monthlyProgressValue = currentGoal.goal_type === 'weight_loss'
                         ? startWeight - currentWeight
                         : currentWeight - startWeight;
 
@@ -125,7 +156,7 @@ const Dashboard = () => {
         } catch (error) {
             logger.error('Error al obtener comparaciones:', error);
         }
-    }, [currentDate, log, goal]);
+    }, [currentDate, logId, logWeight, logConsumedCalories, goalId, goalTargetWeight, goalCurrentWeight, goalType]);
 
     // Fetch streak
     const fetchStreak = useCallback(async () => {
@@ -146,13 +177,13 @@ const Dashboard = () => {
         loadData();
     }, [fetchDailyLog, fetchGoal, fetchStreak]);
 
+    // Usar valores primitivos como dependencias para evitar bucles infinitos
     useEffect(() => {
-        if (log && goal) {
+        // Solo ejecutar si tenemos los datos necesarios y los valores primitivos han cambiado
+        if (log && goal && logWeight !== undefined && goalTargetWeight !== undefined) {
             fetchComparisons();
         }
-        // fetchComparisons está memoizado con useCallback y sus dependencias son estables
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [log, goal, fetchComparisons]); // Incluir fetchComparisons para evitar problemas en producción
+    }, [logId, logWeight, logConsumedCalories, goalId, goalTargetWeight, goalCurrentWeight, goalType, fetchComparisons]);
 
     const totalMacros = mealItems.reduce((acc, item) => {
         if (!item || !item.food) return acc;

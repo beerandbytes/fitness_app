@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { AppLayout } from '@/app/layout/AppLayout';
@@ -26,11 +26,7 @@ const CoachDashboard = () => {
     const [selectedClient, setSelectedClient] = useState(null);
     const [assignType, setAssignType] = useState('routine'); // 'routine' or 'diet'
 
-    useEffect(() => {
-        loadClients();
-    }, []);
-
-    const loadClients = async () => {
+    const loadClients = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get('/coach/clients');
@@ -40,7 +36,11 @@ const CoachDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        loadClients();
+    }, [loadClients]);
 
     // Aplicar filtros y búsqueda
     const filteredClients = useMemo(() => {

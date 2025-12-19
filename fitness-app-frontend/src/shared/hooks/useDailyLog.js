@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import api from '@/services/api';
 
@@ -14,7 +14,8 @@ export const useDailyLog = (initialDate = null) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const formattedDate = format(currentDate, 'yyyy-MM-dd');
+  // Memoizar formattedDate para evitar recreación en cada render
+  const formattedDate = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
 
   const fetchDailyLog = useCallback(async () => {
     setLoading(true);

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,7 +21,8 @@ const weightFormSchema = z.object({
 });
 
 const WeightForm = ({ currentDate, currentWeight, onLogUpdated }) => {
-    const formattedDate = format(currentDate, 'yyyy-MM-dd');
+    // Memoizar formattedDate para evitar recreación en cada render
+    const formattedDate = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
     const toast = useToastStore();
     
     const {

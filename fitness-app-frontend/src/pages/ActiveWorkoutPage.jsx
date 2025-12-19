@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WorkoutTimer from '../components/WorkoutTimer';
 import api from '../services/api';
@@ -37,6 +37,11 @@ const ActiveWorkoutPage = () => {
     const synthRef = useRef(null);
 
     const restDuration = 90; // 90 segundos de descanso por defecto
+
+    // Extraer valores primitivos de routine para usar como dependencias estables
+    const routineIdValue = routine?.routine_id;
+    const currentExerciseId = routine?.exercises?.[currentExerciseIndex]?.exercise_id;
+    const routineExercisesLength = routine?.exercises?.length;
 
     const fetchRoutineDetails = async () => {
         try {
@@ -99,11 +104,21 @@ const ActiveWorkoutPage = () => {
     }, [routineId]);
 
     // Cargar historial del ejercicio para sugerencias
+    // Usar useRef para acceder al valor más reciente de routine sin causar recreaciones
+    const routineRef = useRef(routine);
     useEffect(() => {
-        if (routine && currentExerciseIndex >= 0 && routine.exercises[currentExerciseIndex]) {
-            loadExerciseHistory(routine.exercises[currentExerciseIndex].exercise_id);
+        routineRef.current = routine;
+    }, [routine]);
+
+    useEffect(() => {
+        // Usar valores primitivos como dependencias para evitar bucles infinitos
+        if (currentExerciseId && currentExerciseIndex >= 0) {
+            const currentRoutine = routineRef.current;
+            if (currentRoutine && currentRoutine.exercises && currentRoutine.exercises[currentExerciseIndex]) {
+                loadExerciseHistory(currentExerciseId);
+            }
         }
-    }, [routine, currentExerciseIndex]);
+    }, [currentExerciseId, currentExerciseIndex]);
 
     // Cargar historial del ejercicio
     const loadExerciseHistory = async (exerciseId) => {
@@ -120,7 +135,9 @@ const ActiveWorkoutPage = () => {
                 // Sugerir peso basado en el último entrenamiento
                 if (lastWorkout.weight_kg) {
                     const lastWeight = parseFloat(lastWorkout.weight_kg);
-                    const currentExercise = routine?.exercises[currentExerciseIndex];
+                    // Usar routineRef para acceder al valor más reciente sin causar recreaciones
+                    const currentRoutine = routineRef.current;
+                    const currentExercise = currentRoutine?.exercises?.[currentExerciseIndex];
                     if (currentExercise && lastWorkout.sets_done >= currentExercise.sets) {
                         setSuggestedWeight(lastWeight + 2.5); // Incrementar 2.5kg si completó todas las series
                     } else {
