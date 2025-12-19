@@ -1,5 +1,6 @@
 #!/bin/sh
-set -e
+# No usar set -e aquí para permitir que el servidor inicie incluso si las migraciones fallan
+# set -e
 
 echo "🚀 Iniciando aplicación..."
 

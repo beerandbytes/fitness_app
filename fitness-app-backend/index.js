@@ -373,8 +373,10 @@ app.use(errorHandler);
 // --- 7. INICIO DEL SERVIDOR ---
 // Solo inicia el servidor si no estamos en modo test
 if (process.env.NODE_ENV !== 'test') {
-    httpServer.listen(PORT, () => {
-        logger.info(`🚀 Servidor Express escuchando en http://localhost:${PORT}`);
+    // Escuchar en 0.0.0.0 para que sea accesible desde Docker
+    const HOST = process.env.HOST || '0.0.0.0';
+    httpServer.listen(PORT, HOST, () => {
+        logger.info(`🚀 Servidor Express escuchando en http://${HOST}:${PORT}`);
         logger.info(`🔌 WebSocket Server activo`);
     });
 }
