@@ -53,11 +53,12 @@ const EnhancedInteractiveTour = ({
         }
 
         // Función para actualizar posición usando requestAnimationFrame para mejor rendimiento
-        const updatePosition = () => {
+        // En Docker, limitamos las actualizaciones para evitar loops infinitos con animaciones
+        const updatePosition = (force = false) => {
             // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:55',message:'updatePosition called',data:{isUpdating:isUpdatingRef.current,hasElement:!!elementRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:55',message:'updatePosition called',data:{isUpdating:isUpdatingRef.current,hasElement:!!elementRef.current,force},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
             // #endregion
-            if (isUpdatingRef.current) return;
+            if (isUpdatingRef.current && !force) return;
             
             if (!step || !step.target) return;
 
@@ -83,7 +84,7 @@ const EnhancedInteractiveTour = ({
                         height: rect.height,
                     };
                     
-                    // Solo actualizar si el rect cambió significativamente (más de 2px para evitar micro-updates)
+                    // Solo actualizar si el rect cambió significativamente (más de 10px para evitar micro-updates con animaciones en Docker)
                     setTargetRect(prev => {
                         if (!prev) {
                             // #region agent log
@@ -96,10 +97,10 @@ const EnhancedInteractiveTour = ({
                                     Math.abs(prev.width - newRect.width) + 
                                     Math.abs(prev.height - newRect.height);
                         // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:90',message:'setTargetRect diff check',data:{diff,prev,newRect,willUpdate:diff>2},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                        fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:90',message:'setTargetRect diff check',data:{diff,prev,newRect,willUpdate:diff>10},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
                         // #endregion
-                        // Solo actualizar si hay un cambio significativo (aumentado a 2px para evitar micro-updates que causan loops)
-                        return diff > 2 ? newRect : prev;
+                        // Solo actualizar si hay un cambio significativo (10px para evitar micro-updates que causan loops en Docker)
+                        return diff > 10 ? newRect : prev;
                     });
                     isUpdatingRef.current = false;
                     // #region agent log
@@ -119,20 +120,8 @@ const EnhancedInteractiveTour = ({
             
             if (element) {
                 elementRef.current = element;
-                updatePosition();
-                
-                // Configurar ResizeObserver después de encontrar el elemento
-                if (typeof ResizeObserver !== 'undefined' && !resizeObserverRef.current) {
-                    resizeObserverRef.current = new ResizeObserver(() => {
-                        // Throttle las actualizaciones del ResizeObserver
-                        if (resizeTimeoutRef.current) return;
-                        resizeTimeoutRef.current = setTimeout(() => {
-                            updatePosition();
-                            resizeTimeoutRef.current = null;
-                        }, 150);
-                    });
-                    resizeObserverRef.current.observe(element);
-                }
+                // Solo actualizar posición inicialmente, no en cada cambio
+                updatePosition(true);
             } else {
                 retryCount++;
                 if (retryCount < maxRetries) {
@@ -146,32 +135,61 @@ const EnhancedInteractiveTour = ({
 
         findElement();
 
-        // Throttle de eventos de scroll y resize para mejor rendimiento
+        // Throttle de eventos de scroll para mejor rendimiento
+        // En Docker, limitamos las actualizaciones en scroll para evitar loops
         const handleScroll = () => {
             // #region agent log
             fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:122',message:'handleScroll triggered',data:{hasTimeout:!!scrollTimeoutRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
             // #endregion
             if (scrollTimeoutRef.current) return;
+            // Throttle más agresivo para evitar loops en Docker
             scrollTimeoutRef.current = setTimeout(() => {
-                updatePosition();
+                updatePosition(true);
                 scrollTimeoutRef.current = null;
-            }, 16); // ~60fps
+            }, 100);
         };
 
         const handleWindowResize = () => {
             // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:130',message:'handleResize triggered',data:{hasTimeout:!!resizeTimeoutRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:130',message:'handleWindowResize triggered',data:{hasTimeout:!!resizeTimeoutRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
             // #endregion
             if (resizeTimeoutRef.current) return;
-            // Aumentar el throttle a 200ms para reducir actualizaciones frecuentes durante cambios de input
+            // Solo actualizar en resize real de ventana, con throttle alto para evitar loops
             resizeTimeoutRef.current = setTimeout(() => {
-                updatePosition();
+                updatePosition(true);
                 resizeTimeoutRef.current = null;
-            }, 200);
+            }, 500);
         };
 
+        // Solo escuchar eventos de scroll y resize de ventana, no cambios de layout del elemento
         window.addEventListener('scroll', handleScroll, { passive: true });
         window.addEventListener('resize', handleWindowResize, { passive: true });
+        
+        // Detectar si el usuario está escribiendo en un input y pausar actualizaciones
+        const handleFocus = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:175',message:'input focused, pausing tour updates',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
+                // Pausar actualizaciones mientras el usuario escribe
+                isUpdatingRef.current = true;
+            }
+        };
+        
+        const handleBlur = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:183',message:'input blurred, resuming tour updates',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
+                // Reanudar actualizaciones después de un breve delay
+                setTimeout(() => {
+                    isUpdatingRef.current = false;
+                }, 300);
+            }
+        };
+        
+        document.addEventListener('focusin', handleFocus, true);
+        document.addEventListener('focusout', handleBlur, true);
 
         return () => {
             if (timeoutRef.current) {
@@ -196,6 +214,8 @@ const EnhancedInteractiveTour = ({
             }
             window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', handleWindowResize);
+            document.removeEventListener('focusin', handleFocus, true);
+            document.removeEventListener('focusout', handleBlur, true);
             isUpdatingRef.current = false;
         };
     }, [isActive, currentStep, memoizedSteps]); // Usar memoizedSteps en lugar de steps
