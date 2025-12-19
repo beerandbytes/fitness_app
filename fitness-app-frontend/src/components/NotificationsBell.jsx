@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -12,6 +12,26 @@ const NotificationsBell = React.memo(() => {
     const [loading, setLoading] = useState(true);
     const dropdownRef = useRef(null);
 
+    // Memoizar fetchNotifications para evitar recreaciones innecesarias
+    const fetchNotifications = useCallback(async () => {
+        try {
+            const response = await api.get('/notifications?limit=10');
+            setNotifications(response.data.notifications || []);
+            setUnreadCount(response.data.unreadCount || 0);
+        } catch (error) {
+            // Silenciar errores 403/401 ya que son parte del flujo normal de autenticación
+            // El interceptor de axios ya maneja estos casos
+            if (error.response?.status !== 403 && error.response?.status !== 401) {
+                logger.error('Error al cargar notificaciones:', error);
+            }
+            // Establecer valores por defecto en caso de error
+            setNotifications([]);
+            setUnreadCount(0);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchNotifications();
         // Refrescar cada 30 segundos
@@ -19,7 +39,7 @@ const NotificationsBell = React.memo(() => {
             fetchNotifications();
         }, 30000);
         return () => clearInterval(interval);
-    }, []); // fetchNotifications no necesita estar en dependencias porque usa setState de forma segura
+    }, [fetchNotifications]);
 
     // Cerrar dropdown al hacer click fuera
     useEffect(() => {
@@ -37,25 +57,6 @@ const NotificationsBell = React.memo(() => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isOpen]);
-
-    const fetchNotifications = async () => {
-        try {
-            const response = await api.get('/notifications?limit=10');
-            setNotifications(response.data.notifications || []);
-            setUnreadCount(response.data.unreadCount || 0);
-        } catch (error) {
-            // Silenciar errores 403/401 ya que son parte del flujo normal de autenticación
-            // El interceptor de axios ya maneja estos casos
-            if (error.response?.status !== 403 && error.response?.status !== 401) {
-                logger.error('Error al cargar notificaciones:', error);
-            }
-            // Establecer valores por defecto en caso de error
-            setNotifications([]);
-            setUnreadCount(0);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const markAsRead = async (notificationId) => {
         try {

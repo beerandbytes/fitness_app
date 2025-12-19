@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 /**
@@ -22,10 +22,17 @@ const ValidatedInput = ({
   const [isValid, setIsValid] = useState(null);
   const [isTouched, setIsTouched] = useState(false);
   const [message, setMessage] = useState('');
-  const lastValidatedValueRef = React.useRef(value);
-  const lastValidationResultRef = React.useRef({ valid: null, message: '' });
-  const validationTimeoutRef = React.useRef(null);
-  const isProcessingRef = React.useRef(false);
+  const lastValidatedValueRef = useRef(value);
+  const lastValidationResultRef = useRef({ valid: null, message: '' });
+  const validationTimeoutRef = useRef(null);
+  const isProcessingRef = useRef(false);
+  // Usar ref para almacenar la función validator y evitar recreaciones innecesarias
+  const validatorRef = useRef(validator);
+
+  // Actualizar el ref de validator cuando cambie
+  useEffect(() => {
+    validatorRef.current = validator;
+  }, [validator]);
 
   useEffect(() => {
     // #region agent log
@@ -70,10 +77,12 @@ const ValidatedInput = ({
       return;
     }
 
-    if (validator) {
+    // Usar validatorRef.current en lugar de validator directamente para evitar dependencias inestables
+    const currentValidator = validatorRef.current;
+    if (currentValidator) {
       // Usar debounce también para validación cuando hay valor (150ms)
       validationTimeoutRef.current = setTimeout(() => {
-        const result = validator(value);
+        const result = currentValidator(value);
         setIsValid(result.valid);
         setMessage(result.message || '');
         lastValidationResultRef.current = { valid: result.valid, message: result.message || '' };
@@ -95,9 +104,10 @@ const ValidatedInput = ({
         validationTimeoutRef.current = null;
       }
     };
+    // Remover validator de las dependencias y usar validatorRef.current en su lugar
     // onValidation puede cambiar en cada render, pero es una función callback
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, validator, isTouched]);
+  }, [value, isTouched]);
 
   const handleBlur = () => {
     setIsTouched(true);

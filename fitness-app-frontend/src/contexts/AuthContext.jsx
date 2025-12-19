@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
 // NOTA: Debes instalar react-router-dom para que 'useNavigate' funcione: npm install react-router-dom
 import { useNavigate } from 'react-router-dom'; 
@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   // Función para cargar/verificar el usuario al iniciar la aplicación o después del login
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     const token = localStorage.getItem('userToken');
     if (token) {
       try {
@@ -33,15 +33,14 @@ export const AuthProvider = ({ children }) => {
     setTimeout(() => {
       setLoading(false);
     }, 0);
-  };
+  }, []);
 
   useEffect(() => {
     loadUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  }, [loadUser]); 
 
-  // Funciones de Autenticación
-  const login = async (email, password) => {
+  // Funciones de Autenticación - memoizadas para evitar recreaciones
+  const login = useCallback(async (email, password) => {
     const response = await api.post('/auth/login', { 
       email, 
       password,
@@ -55,9 +54,9 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('userId', user.id);
     setUser(user);
     navigate('/dashboard', { replace: true });
-  };
+  }, [navigate]);
 
-  const register = async (email, password) => {
+  const register = useCallback(async (email, password) => {
     const response = await api.post('/auth/register', { 
       email, 
       password,
@@ -73,10 +72,18 @@ export const AuthProvider = ({ children }) => {
     setUser(user); 
     // Redirigir a welcome para onboarding
     navigate('/welcome', { replace: true });
-  };
+  }, [navigate]);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userId');
+    setUser(null);
+    navigate('/login', { replace: true });
+  }, [navigate]);
 
   // Función para refrescar el token de acceso
-  const refreshAccessToken = async () => {
+  const refreshAccessToken = useCallback(async () => {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
       throw new Error('No refresh token available');
@@ -98,29 +105,22 @@ export const AuthProvider = ({ children }) => {
       logout();
       throw error;
     }
-  };
+  }, [logout]);
 
-  const logout = () => {
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userId');
-    setUser(null);
-    navigate('/login', { replace: true });
-  };
+  // Memoizar el objeto value para evitar recreaciones innecesarias
+  const value = useMemo(() => ({
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    refreshAccessToken,
+    isAuthenticated: !!user,
+    isAdmin: !!user?.isAdmin,
+  }), [user, loading, login, register, logout, refreshAccessToken]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        register,
-        logout,
-        refreshAccessToken,
-        isAuthenticated: !!user,
-        isAdmin: !!user?.isAdmin,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

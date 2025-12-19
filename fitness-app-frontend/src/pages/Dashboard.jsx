@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModernNavbar from '../components/ModernNavbar';
 import BottomNavigation from '../components/BottomNavigation';
@@ -41,7 +41,8 @@ const Dashboard = () => {
     const [monthlyProgress, setMonthlyProgress] = useState(null);
     const [streak, setStreak] = useState(0);
     
-    const formattedDate = format(currentDate, 'yyyy-MM-dd');
+    // Memoizar formattedDate para evitar recreación en cada render
+    const formattedDate = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
     
     const fetchDailyLog = useCallback(async () => {
         try {
@@ -151,7 +152,7 @@ const Dashboard = () => {
         }
         // fetchComparisons está memoizado con useCallback y sus dependencias son estables
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [log, goal]); // Removido fetchComparisons de dependencias para evitar bucles
+    }, [log, goal, fetchComparisons]); // Incluir fetchComparisons para evitar problemas en producción
 
     const totalMacros = mealItems.reduce((acc, item) => {
         if (!item || !item.food) return acc;

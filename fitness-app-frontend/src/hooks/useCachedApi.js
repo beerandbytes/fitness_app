@@ -88,8 +88,8 @@ export const useCachedApi = (url, options = {}) => {
       fetchData();
     }
     // fetchData está memoizado con useCallback y sus dependencias son estables
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [immediate]); // Removido fetchData de dependencias para evitar bucles infinitos
+    // Incluir fetchData en dependencias para evitar problemas en producción
+  }, [immediate, fetchData]);
 
   // Función para refrescar datos (ignorar caché)
   const refresh = useCallback(() => {
