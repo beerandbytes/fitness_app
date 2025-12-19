@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Documentation (formatear manualmente si es necesario)
+*.md
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+
+# Config files that should maintain their format
+*.json
+*.yaml
+*.yml
+
+# Generated files
+.docusaurus/
+

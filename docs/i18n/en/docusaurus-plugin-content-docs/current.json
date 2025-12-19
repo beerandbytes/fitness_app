@@ -1,0 +1,19 @@
+{
+  "version.label": {
+    "message": "Current",
+    "description": "The label for version current"
+  },
+  "sidebar.docsSidebar.category.Introducción": {
+    "message": "Introduction",
+    "description": "The label for category Introducción in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.Base de datos": {
+    "message": "Database",
+    "description": "The label for category Base de datos in sidebar docsSidebar"
+  },
+  "sidebar.docsSidebar.category.DevOps y despliegue": {
+    "message": "DevOps and deployment",
+    "description": "The label for category DevOps y despliegue in sidebar docsSidebar"
+  }
+}
+

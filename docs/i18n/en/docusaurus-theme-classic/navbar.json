@@ -1,0 +1,31 @@
+{
+  "title": {
+    "message": "Fitness App",
+    "description": "The title in the navbar"
+  },
+  "item.label.Guía rápida": {
+    "message": "Quick Guide",
+    "description": "Navbar item with label Guía rápida"
+  },
+  "item.label.Backend": {
+    "message": "Backend",
+    "description": "Navbar item with label Backend"
+  },
+  "item.label.Frontend": {
+    "message": "Frontend",
+    "description": "Navbar item with label Frontend"
+  },
+  "item.label.Base de datos": {
+    "message": "Database",
+    "description": "Navbar item with label Base de datos"
+  },
+  "item.label.API": {
+    "message": "API",
+    "description": "Navbar item with label API"
+  },
+  "item.label.DevOps": {
+    "message": "DevOps",
+    "description": "Navbar item with label DevOps"
+  }
+}
+

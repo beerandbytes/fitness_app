@@ -1,0 +1,50 @@
+{
+  "name": "fitness-app-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo para Fitness App - Backend, Frontend y Documentación",
+  "scripts": {
+    "docs:start": "npm --prefix docs start",
+    "docs:build": "npm --prefix docs build",
+    "docs:serve": "npm --prefix docs run serve",
+    "backend:install": "npm --prefix fitness-app-backend install",
+    "backend:start": "npm --prefix fitness-app-backend start",
+    "backend:test": "npm --prefix fitness-app-backend test",
+    "backend:migrate": "npm --prefix fitness-app-backend run db:migrate",
+    "frontend:install": "npm --prefix fitness-app-frontend install",
+    "frontend:dev": "npm --prefix fitness-app-frontend run dev",
+    "frontend:build": "npm --prefix fitness-app-frontend run build",
+    "frontend:test": "npm --prefix fitness-app-frontend test",
+    "install:all": "npm install && npm run backend:install && npm run frontend:install && cd docs && npm install",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\" --ignore-path .gitignore",
+    "lint": "npm run lint --prefix fitness-app-frontend",
+    "test": "npm run backend:test && npm run frontend:test",
+    "verify": "node scripts/verify-setup.js",
+    "clean": "npm run clean --prefix fitness-app-backend && npm run clean --prefix fitness-app-frontend",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:prod:build": "docker-compose -f docker-compose.prod.yml build",
+    "docker:prod:up": "docker-compose -f docker-compose.prod.yml up -d"
+  },
+  "keywords": [
+    "fitness",
+    "health",
+    "workout",
+    "nutrition",
+    "react",
+    "express",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^3.7.3"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  }
+}

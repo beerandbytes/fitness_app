@@ -1,0 +1,75 @@
+# Dockerfile para el Backend (Optimizado)
+# Multi-stage build para reducir tamaño de imagen final
+
+# Stage 1: Dependencies
+# Actualizado a Node.js 24.x (LTS 2025) para seguridad y compatibilidad
+FROM node:24-alpine AS deps
+
+# Instalar dependencias del sistema necesarias
+RUN apk add --no-cache bash
+
+WORKDIR /app
+
+# Copiar solo archivos de dependencias para mejor caché de Docker
+COPY package.json package-lock.json* ./
+
+# Verificar que package.json existe
+RUN test -f package.json || (echo "ERROR: package.json not found!" && exit 1)
+
+# Instalar dependencias de producción
+RUN npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
+
+# Stage 2: Builder (si necesitas compilar algo)
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+
+# Copiar dependencias del stage anterior
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copiar el resto del código
+COPY . .
+
+# Hacer ejecutable el script de entrada
+RUN chmod +x ./docker-entrypoint.sh
+
+# Stage 3: Production
+FROM node:24-alpine AS runner
+
+# Crear usuario no-root para seguridad
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nodejs
+
+WORKDIR /app
+
+# Copiar solo lo necesario desde builder
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/index.js ./
+COPY --from=builder --chown=nodejs:nodejs /app/db ./db
+COPY --from=builder --chown=nodejs:nodejs /app/routes ./routes
+COPY --from=builder --chown=nodejs:nodejs /app/middleware ./middleware
+COPY --from=builder --chown=nodejs:nodejs /app/config ./config
+COPY --from=builder --chown=nodejs:nodejs /app/utils ./utils
+COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nodejs:nodejs /app/drizzle ./drizzle
+COPY --from=builder --chown=nodejs:nodejs /app/docker-entrypoint.sh ./
+
+# Cambiar a usuario no-root
+USER nodejs
+
+# Exponer el puerto
+EXPOSE 4000
+
+# Variables de entorno por defecto
+ENV NODE_ENV=production
+ENV PORT=4000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:4000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# Usar el script de entrada
+ENTRYPOINT ["./docker-entrypoint.sh"]
+

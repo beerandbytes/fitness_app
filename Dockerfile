@@ -1,0 +1,36 @@
+# Dockerfile para el Backend - Build desde la raíz del repositorio
+# Este Dockerfile se usa cuando Root Directory está vacío en Render
+# Configuración en Render:
+# - Root Directory: (vacío)
+# - Dockerfile Path: Dockerfile
+
+FROM node:22-alpine
+
+# Instalar dependencias del sistema si es necesario
+RUN apk add --no-cache bash
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias desde el subdirectorio backend
+COPY fitness-app-backend/package.json ./
+COPY fitness-app-backend/package-lock.json* ./
+
+# Verificar que package.json existe
+RUN test -f package.json || (echo "ERROR: package.json not found! Build context: $(pwd); Files: $(ls -la)" && exit 1)
+
+# Instalar dependencias
+RUN npm install --omit=dev
+
+# Copiar el resto del código del backend
+COPY fitness-app-backend/ ./
+
+# Hacer ejecutable el script de entrada
+RUN chmod +x ./docker-entrypoint.sh
+
+# Exponer el puerto
+EXPOSE 4000
+
+# Usar el script de entrada
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
