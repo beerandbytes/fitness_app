@@ -42,6 +42,9 @@ RUN chmod +x ./docker-entrypoint.sh
 # Stage 3: Production
 FROM node:24-alpine AS runner
 
+# Instalar wget para healthcheck
+RUN apk add --no-cache wget
+
 # Crear usuario no-root para seguridad
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nodejs
@@ -71,9 +74,9 @@ EXPOSE 4000
 ENV NODE_ENV=production
 ENV PORT=4000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:4000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+# Health check - usar endpoint /live que no requiere DB
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+    CMD wget --quiet --tries=1 --spider http://localhost:4000/api/health/live || exit 1
 
 # Usar el script de entrada
 ENTRYPOINT ["./docker-entrypoint.sh"]
