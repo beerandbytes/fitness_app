@@ -1,19 +1,13 @@
 #!/bin/sh
-# No usar set -e aquí para permitir que el servidor inicie incluso si las migraciones fallan
-# set -e
 
 echo "🚀 Iniciando aplicación..."
 
-# Ejecutar migraciones
+# Ejecutar migraciones (no bloquea si fallan)
 echo "📦 Ejecutando migraciones de base de datos..."
-npm run db:migrate || {
+npm run db:migrate 2>&1 || {
     echo "⚠️  Advertencia: Las migraciones fallaron, pero continuando..."
+    echo "   El servidor iniciará de todas formas. Las migraciones se pueden ejecutar manualmente después."
 }
-
-# NOTA: Los seeds (ejercicios y alimentos) se ejecutan durante el BUILD en render.yaml
-# No se ejecutan aquí para evitar bloquear el inicio del servidor
-# Si necesitas ejecutar seeds manualmente después del despliegue:
-#   npm run seed:all
 
 # Verificar variables de entorno críticas
 echo "🔍 Verificando variables de entorno..."
@@ -33,7 +27,7 @@ else
     echo "⚠️  ADVERTENCIA: ADMIN_EMAILS no está configurada. Los usuarios no serán marcados como admin automáticamente."
 fi
 
-# Iniciar el servidor
-echo "✅ Iniciando servidor..."
+# Iniciar el servidor (siempre ejecuta, incluso si las migraciones fallaron)
+echo "✅ Iniciando servidor en puerto ${PORT:-4000}..."
 exec node index.js
 

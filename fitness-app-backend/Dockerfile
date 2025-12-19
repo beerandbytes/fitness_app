@@ -74,9 +74,9 @@ EXPOSE 4000
 ENV NODE_ENV=production
 ENV PORT=4000
 
-# Health check - usar endpoint /live que no requiere DB
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
-    CMD wget --quiet --tries=1 --spider http://localhost:4000/api/health/live || exit 1
+# Health check - usar endpoint raíz que es más simple
+HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=5 \
+    CMD wget --quiet --tries=1 --spider --timeout=5 http://127.0.0.1:4000/ || exit 1
 
 # Usar el script de entrada
 ENTRYPOINT ["./docker-entrypoint.sh"]

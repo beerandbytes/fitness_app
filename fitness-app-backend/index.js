@@ -172,8 +172,12 @@ app.use(cors(corsOptions));
 const { generalLimiter } = require('./middleware/rateLimiter');
 
 // --- 3. RUTAS PÚBLICAS Y DE AUTENTICACIÓN ---
-// Ruta de prueba (con rate limiting)
-app.get('/', generalLimiter, (req, res) => {
+// Health check (debe ir ANTES de rate limiting para monitoreo rápido)
+// Health check sin rate limiting para monitoreo
+app.use('/api/health', healthRoutes);
+
+// Ruta de prueba simple para healthcheck (sin rate limiting)
+app.get('/', (req, res) => {
     res.send('Servidor de Fitness App corriendo con Express y Drizzle!');
 });
 
@@ -187,10 +191,6 @@ if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SWAGGER === 'tru
     }));
     logger.info('Swagger UI disponible en /api-docs');
 }
-
-// Health check (debe ir antes de otras rutas para monitoreo rápido)
-// Health check sin rate limiting para monitoreo
-app.use('/api/health', healthRoutes);
 
 // Rutas de Registro y Login (ya tienen rate limiting en authRoutes)
 app.use('/api/auth', authRoutes);
@@ -378,6 +378,13 @@ if (process.env.NODE_ENV !== 'test') {
     httpServer.listen(PORT, HOST, () => {
         logger.info(`🚀 Servidor Express escuchando en http://${HOST}:${PORT}`);
         logger.info(`🔌 WebSocket Server activo`);
+        logger.info(`✅ Health check disponible en http://${HOST}:${PORT}/api/health/live`);
+    }).on('error', (error) => {
+        logger.error(`❌ Error al iniciar el servidor: ${error.message}`);
+        if (error.code === 'EADDRINUSE') {
+            logger.error(`   El puerto ${PORT} ya está en uso`);
+        }
+        process.exit(1);
     });
 }
 
