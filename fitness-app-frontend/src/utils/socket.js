@@ -1,7 +1,9 @@
 import { io } from 'socket.io-client';
 import logger from './logger';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// Para WebSocket, necesitamos la URL completa. Si no está definida, usar ruta relativa
+// que será resuelta por el proxy de nginx
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000' : window.location.origin);
 
 let socket = null;
 

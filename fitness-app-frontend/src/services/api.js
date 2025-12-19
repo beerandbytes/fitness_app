@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 // URL del backend - Configurable mediante variable de entorno para producción
-// En desarrollo usa localhost, en producción usa la variable de entorno
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'; 
+// Si VITE_API_URL no está definida, usa ruta relativa (funciona con proxy de nginx)
+// En desarrollo local sin Docker, usa localhost
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000/api' : '/api'); 
 
 // Crear una instancia de Axios
 const api = axios.create({

@@ -308,14 +308,29 @@ Si quieres compartir tu aplicación localmente o probar desde otros dispositivos
    ngrok config add-authtoken tu-token-aqui
    ```
 
-4. **Expone tu aplicación:**
+4. **Verifica los puertos de tus contenedores Docker:**
    ```bash
-   # Para el frontend (puerto 5173)
-   ngrok http 5173
+   # Ver los puertos expuestos por tus contenedores
+   docker ps
+   # O más específico:
+   docker ps --format "table {{.Names}}\t{{.Ports}}"
+   ```
+   
+   **Puertos por defecto en Docker Compose:**
+   - Frontend: Puerto **3000** (mapeado al puerto 80 interno del contenedor)
+   - Backend: Puerto **4000**
+   - PostgreSQL: Puerto **5432** (solo accesible desde dentro de Docker)
+
+5. **Expone tu aplicación con ngrok usando los puertos correctos:**
+   ```bash
+   # Para el frontend (puerto 3000 por defecto, o el configurado en FRONTEND_PORT)
+   ngrok http 3000
    
    # Para el backend (puerto 4000) - en otra terminal
    ngrok http 4000
    ```
+   
+   **Nota importante:** Si configuraste `FRONTEND_PORT` con un valor diferente en Coolify, usa ese puerto en lugar de 3000.
 
 5. **Usa las URLs de ngrok** en tus variables de entorno:
    ```

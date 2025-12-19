@@ -141,6 +141,9 @@ const corsOptions = {
             /^https:\/\/.*\.vercel\.app$/,
             /^https:\/\/.*\.netlify\.app$/,
             /^https:\/\/.*\.onrender\.com$/,  // Render.com domains
+            /^https:\/\/.*\.ngrok-free\.dev$/,  // ngrok free domains
+            /^https:\/\/.*\.ngrok\.io$/,  // ngrok paid domains
+            /^https:\/\/.*\.ngrok-app\.dev$/,  // ngrok app domains
             'http://localhost:5173',
             'http://localhost:3000'
         ].filter(Boolean);
