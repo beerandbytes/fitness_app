@@ -30,14 +30,22 @@ const mockBrandSettings = {
 describe('AuthForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useUserStore.mockReturnValue({
-      login: mockLogin,
-      register: mockRegister,
-      isAuthenticated: mockIsAuthenticated,
-      user: mockUser,
+    // Mock useUserStore como selector de Zustand
+    useUserStore.mockImplementation((selector) => {
+      const state = {
+        login: mockLogin,
+        register: mockRegister,
+        isAuthenticated: mockIsAuthenticated,
+        user: mockUser,
+      };
+      return typeof selector === 'function' ? selector(state) : state;
     });
-    useBrandStore.mockReturnValue({
-      brandSettings: mockBrandSettings,
+    // Mock useBrandStore como selector de Zustand
+    useBrandStore.mockImplementation((selector) => {
+      const state = {
+        brandSettings: mockBrandSettings,
+      };
+      return typeof selector === 'function' ? selector(state) : state;
     });
   });
 
@@ -61,6 +69,7 @@ describe('AuthForm', () => {
 
     it('should not show social auth buttons on login page', () => {
       renderAuthForm('/login');
+      // SocialAuth solo se muestra en register, no en login
       expect(screen.queryByText('Google Login')).not.toBeInTheDocument();
     });
 
@@ -75,8 +84,8 @@ describe('AuthForm', () => {
 
       renderAuthForm('/login');
 
-      const emailInput = screen.getByLabelText('Correo electrónico');
-      const passwordInput = screen.getByLabelText('Contraseña');
+      const emailInput = screen.getByRole('textbox', { name: /correo electrónico/i });
+      const passwordInput = screen.getByLabelText(/contraseña/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -94,8 +103,8 @@ describe('AuthForm', () => {
 
       renderAuthForm('/login');
 
-      const emailInput = screen.getByLabelText('Correo electrónico');
-      const passwordInput = screen.getByLabelText('Contraseña');
+      const emailInput = screen.getByRole('textbox', { name: /correo electrónico/i });
+      const passwordInput = screen.getByLabelText(/contraseña/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -145,8 +154,8 @@ describe('AuthForm', () => {
 
       renderAuthForm('/register');
 
-      const emailInput = screen.getByLabelText('Correo electrónico');
-      const passwordInput = screen.getByLabelText('Contraseña');
+      const emailInput = screen.getByRole('textbox', { name: /correo electrónico/i });
+      const passwordInput = screen.getByLabelText(/contraseña/i);
       const submitButton = screen.getByRole('button', { name: /crear cuenta/i });
 
       await user.type(emailInput, 'newuser@example.com');
@@ -167,8 +176,8 @@ describe('AuthForm', () => {
 
       renderAuthForm('/register');
 
-      const emailInput = screen.getByLabelText('Correo electrónico');
-      const passwordInput = screen.getByLabelText('Contraseña');
+      const emailInput = screen.getByRole('textbox', { name: /correo electrónico/i });
+      const passwordInput = screen.getByLabelText(/contraseña/i);
       const submitButton = screen.getByRole('button', { name: /crear cuenta/i });
 
       await user.type(emailInput, 'existing@example.com');
@@ -193,8 +202,8 @@ describe('AuthForm', () => {
 
       renderAuthForm('/register');
 
-      const emailInput = screen.getByLabelText('Correo electrónico');
-      const passwordInput = screen.getByLabelText('Contraseña');
+      const emailInput = screen.getByRole('textbox', { name: /correo electrónico/i });
+      const passwordInput = screen.getByLabelText(/contraseña/i);
       const submitButton = screen.getByRole('button', { name: /crear cuenta/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -214,8 +223,8 @@ describe('AuthForm', () => {
 
       renderAuthForm('/login');
 
-      const emailInput = screen.getByLabelText('Correo electrónico');
-      const passwordInput = screen.getByLabelText('Contraseña');
+      const emailInput = screen.getByRole('textbox', { name: /correo electrónico/i });
+      const passwordInput = screen.getByLabelText(/contraseña/i);
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
 
       await user.type(emailInput, 'test@example.com');
@@ -235,8 +244,8 @@ describe('AuthForm', () => {
       renderAuthForm('/login');
 
       const submitButton = screen.getByRole('button', { name: /iniciar sesión/i });
-      const emailInput = screen.getByLabelText('Correo electrónico');
-      const passwordInput = screen.getByLabelText('Contraseña');
+      const emailInput = screen.getByRole('textbox', { name: /correo electrónico/i });
+      const passwordInput = screen.getByLabelText(/contraseña/i);
 
       await user.type(emailInput, 'test@example.com');
       await user.type(passwordInput, 'password123');
@@ -250,11 +259,14 @@ describe('AuthForm', () => {
 
   describe('Brand Settings', () => {
     it('should display brand logo when logo_url is provided', () => {
-      useBrandStore.mockReturnValue({
-        brandSettings: {
-          ...mockBrandSettings,
-          logo_url: 'https://example.com/logo.png',
-        },
+      useBrandStore.mockImplementation((selector) => {
+        const state = {
+          brandSettings: {
+            ...mockBrandSettings,
+            logo_url: 'https://example.com/logo.png',
+          },
+        };
+        return typeof selector === 'function' ? selector(state) : state;
       });
 
       renderAuthForm('/login');
@@ -272,11 +284,14 @@ describe('AuthForm', () => {
     });
 
     it('should use brand name first letter for fallback logo', () => {
-      useBrandStore.mockReturnValue({
-        brandSettings: {
-          brand_name: 'My Fitness',
-          logo_url: null,
-        },
+      useBrandStore.mockImplementation((selector) => {
+        const state = {
+          brandSettings: {
+            brand_name: 'My Fitness',
+            logo_url: null,
+          },
+        };
+        return typeof selector === 'function' ? selector(state) : state;
       });
 
       renderAuthForm('/login');
@@ -289,11 +304,14 @@ describe('AuthForm', () => {
     it('should redirect authenticated users without role to role selection', () => {
       const mockNavigate = vi.fn();
       mockIsAuthenticated.mockReturnValue(true);
-      useUserStore.mockReturnValue({
-        login: mockLogin,
-        register: mockRegister,
-        isAuthenticated: mockIsAuthenticated,
-        user: { id: 1, email: 'test@example.com', role: null },
+      useUserStore.mockImplementation((selector) => {
+        const state = {
+          login: mockLogin,
+          register: mockRegister,
+          isAuthenticated: mockIsAuthenticated,
+          user: { id: 1, email: 'test@example.com', role: null },
+        };
+        return typeof selector === 'function' ? selector(state) : state;
       });
 
       render(

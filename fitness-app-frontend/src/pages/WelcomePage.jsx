@@ -68,15 +68,21 @@ const WelcomePage = () => {
         }
     }, [progressLoading, hasSavedProgress, restoreProgress]);
 
-    // Mostrar tour interactivo en el primer paso
+    // Mostrar tour interactivo en el primer paso (solo una vez)
     useEffect(() => {
-        if (currentStep === 1) {
+        if (currentStep === 1 && !showTour) {
             const hasSeenTour = localStorage.getItem('onboarding_tour_completed');
-            if (!hasSeenTour) {
-                setTimeout(() => setShowTour(true), 1000);
+            const completedTours = JSON.parse(localStorage.getItem('completed_tours') || '[]');
+            const hasCompletedTour = completedTours.includes('onboarding_welcome');
+            
+            if (!hasSeenTour && !hasCompletedTour) {
+                const timer = setTimeout(() => {
+                    setShowTour(true);
+                }, 1000);
+                return () => clearTimeout(timer);
             }
         }
-    }, [currentStep]);
+    }, [currentStep, showTour]);
 
     // Guardar progreso después de cada cambio
     useEffect(() => {

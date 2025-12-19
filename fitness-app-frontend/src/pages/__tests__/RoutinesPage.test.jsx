@@ -116,14 +116,13 @@ describe('RoutinesPage', () => {
         expect(screen.getByTestId('routine-1')).toBeInTheDocument();
       });
 
-      const createButton = screen.getByText(/crear rutina/i) || screen.getByLabelText(/crear/i);
-      if (createButton) {
-        await userEvent.click(createButton);
-        // Modal should open
-        await waitFor(() => {
-          expect(screen.getByLabelText(/nombre/i)).toBeInTheDocument();
-        });
-      }
+      const createButton = screen.getByRole('button', { name: /nueva rutina/i });
+      await userEvent.click(createButton);
+      // Modal should open
+      await waitFor(() => {
+        // El input de nombre está en el modal, buscar por placeholder o por el texto del label
+        expect(screen.getByPlaceholderText(/rutina de fuerza/i)).toBeInTheDocument();
+      });
     });
 
     it('should create routine successfully', async () => {
@@ -147,7 +146,7 @@ describe('RoutinesPage', () => {
       });
 
       // Find and click create button
-      const createButton = screen.queryByText(/crear rutina/i) || screen.queryByLabelText(/crear/i);
+      const createButton = screen.queryByText(/nueva rutina/i) || screen.queryByLabelText(/crear/i);
       if (createButton) {
         await userEvent.click(createButton);
 

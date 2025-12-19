@@ -87,7 +87,7 @@ describe('WeightForm', () => {
     );
 
     const input = screen.getByLabelText(/peso actual/i);
-    const submitButton = screen.getByRole('button', { name: /registrar peso/i });
+    const submitButton = screen.getByRole('button', { name: /registrar nuevo peso/i });
 
     // Intentar con un peso muy bajo
     await user.clear(input);
@@ -130,7 +130,7 @@ describe('WeightForm', () => {
     );
 
     const input = screen.getByLabelText(/peso actual/i);
-    const submitButton = screen.getByRole('button', { name: /registrar peso/i });
+    const submitButton = screen.getByRole('button', { name: /registrar nuevo peso/i });
 
     await user.clear(input);
     await user.type(input, '80.5');
@@ -172,21 +172,13 @@ describe('WeightForm', () => {
     await user.clear(input);
     await user.type(input, '80.5');
     
-    // El error se lanzará pero será manejado por el componente
-    // Usar un try-catch para manejar el error no manejado
-    try {
-      await user.click(submitButton);
+    await user.click(submitButton);
 
-      await waitFor(() => {
-        expect(api.post).toHaveBeenCalled();
-        // Verificar que se llamó al toast de error
-        expect(mockToast.error).toHaveBeenCalled();
-      }, { timeout: 3000 });
-    } catch (error) {
-      // El error puede ser lanzado pero ya fue manejado por el componente
-      // Verificamos que al menos se intentó llamar a la API
+    await waitFor(() => {
       expect(api.post).toHaveBeenCalled();
-    }
+      // Verificar que se llamó al toast de error
+      expect(mockToast.error).toHaveBeenCalled();
+    }, { timeout: 3000 });
 
     // El error se maneja internamente, no se llama a onLogUpdated
     expect(mockOnLogUpdated).not.toHaveBeenCalled();

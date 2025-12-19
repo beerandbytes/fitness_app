@@ -11,8 +11,9 @@ describe('Logger', () => {
   });
 
   it('should log debug messages in development', () => {
+    vi.spyOn(console, 'debug').mockImplementation(() => {});
     logger.debug('Debug message');
-    expect(console.log).toHaveBeenCalled();
+    expect(console.debug).toHaveBeenCalled();
   });
 
   it('should log info messages', () => {

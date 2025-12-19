@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ValidatedInput from '../ValidatedInput';
 
@@ -20,7 +20,8 @@ describe('ValidatedInput', () => {
       />
     );
 
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    const input = screen.getByRole('textbox', { name: /email/i });
+    expect(input).toBeInTheDocument();
   });
 
   it('debe mostrar el valor del input', () => {
@@ -34,11 +35,12 @@ describe('ValidatedInput', () => {
       />
     );
 
-    const input = screen.getByLabelText(/nombre/i);
+    const input = screen.getByRole('textbox', { name: /nombre/i });
     expect(input).toHaveValue('Juan');
   });
 
-  it('debe mostrar mensaje de error cuando hay error', () => {
+  it('debe mostrar mensaje de error cuando hay error', async () => {
+    const user = userEvent.setup();
     render(
       <ValidatedInput
         label="Email"
@@ -46,11 +48,18 @@ describe('ValidatedInput', () => {
         type="email"
         value=""
         onChange={() => {}}
-        error="El email es requerido"
+        errorMessage="El email es requerido"
+        validator={(value) => ({ valid: false, message: 'El email es requerido' })}
       />
     );
 
-    expect(screen.getByText(/el email es requerido/i)).toBeInTheDocument();
+    const input = screen.getByRole('textbox', { name: /email/i });
+    await user.type(input, 'test');
+    await user.tab(); // Trigger blur to set isTouched
+
+    await waitFor(() => {
+      expect(screen.getByText(/el email es requerido/i)).toBeInTheDocument();
+    });
   });
 
   it('debe llamar onChange cuando el usuario escribe', async () => {
@@ -67,13 +76,14 @@ describe('ValidatedInput', () => {
       />
     );
 
-    const input = screen.getByLabelText(/nombre/i);
+    const input = screen.getByRole('textbox', { name: /nombre/i });
     await user.type(input, 'test');
 
     expect(handleChange).toHaveBeenCalled();
   });
 
-  it('debe aplicar clases de error cuando hay error', () => {
+  it('debe aplicar clases de error cuando hay error', async () => {
+    const user = userEvent.setup();
     const { container } = render(
       <ValidatedInput
         label="Email"
@@ -81,12 +91,18 @@ describe('ValidatedInput', () => {
         type="email"
         value=""
         onChange={() => {}}
-        error="Error de validación"
+        errorMessage="Error de validación"
+        validator={(value) => ({ valid: false, message: 'Error de validación' })}
       />
     );
 
     const input = container.querySelector('input');
-    expect(input).toHaveClass(/border-red/i);
+    await user.type(input, 'test');
+    await user.tab(); // Trigger blur to set isTouched
+
+    await waitFor(() => {
+      expect(input).toHaveClass(/border-red/i);
+    });
   });
 
   it('debe mostrar el placeholder cuando se proporciona', () => {
@@ -116,7 +132,7 @@ describe('ValidatedInput', () => {
       />
     );
 
-    const input = screen.getByLabelText(/email/i);
+    const input = screen.getByRole('textbox', { name: /email/i });
     expect(input).toBeDisabled();
   });
 

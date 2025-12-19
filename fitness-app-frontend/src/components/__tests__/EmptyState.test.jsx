@@ -26,7 +26,7 @@ describe('EmptyState', () => {
         title="No hay datos"
         description="No se encontraron elementos"
         actionLabel="Crear nuevo"
-        onAction={handleAction}
+        actionOnClick={handleAction}
       />
     );
 
@@ -44,7 +44,7 @@ describe('EmptyState', () => {
       <EmptyState
         title="No hay datos"
         description="No se encontraron elementos"
-        icon={TestIcon}
+        icon={<TestIcon />}
       />
     );
 

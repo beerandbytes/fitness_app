@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronRight, ChevronLeft, Check } from 'lucide-react';
 
 /**
@@ -14,8 +14,11 @@ const EnhancedInteractiveTour = ({
 }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [isActive, setIsActive] = useState(autoStart && steps.length > 0);
-    const [targetElement, setTargetElement] = useState(null);
     const [targetRect, setTargetRect] = useState(null);
+    const elementRef = useRef(null);
+    const timeoutRef = useRef(null);
+    const rafRef = useRef(null);
+    const isUpdatingRef = useRef(false);
 
     // Verificar si el tour ya fue completado
     useEffect(() => {
@@ -27,62 +30,22 @@ const EnhancedInteractiveTour = ({
         }
     }, [tourId]);
 
-    // Encontrar y seguir el elemento objetivo
-    useEffect(() => {
-        if (!isActive || !steps || steps.length === 0) {
-            setTargetElement(null);
-            setTargetRect(null);
-            return;
-        }
-
+    // Función para actualizar posición usando requestAnimationFrame para mejor rendimiento
+    const updatePosition = useCallback(() => {
+        if (isUpdatingRef.current) return;
+        
         const step = steps[currentStep];
-        if (!step || !step.target) {
-            setTargetElement(null);
-            setTargetRect(null);
-            return;
-        }
+        if (!step || !step.target) return;
 
-        let timeoutId = null;
-        let elementRef = null;
-
-        const findElement = () => {
-            const element = typeof step.target === 'string' 
-                ? document.querySelector(step.target)
-                : step.target;
+        const currentElement = elementRef.current || (typeof step.target === 'string' 
+            ? document.querySelector(step.target)
+            : step.target);
             
-            if (element) {
-                elementRef = element;
-                setTargetElement(element);
-                const rect = element.getBoundingClientRect();
-                setTargetRect({
-                    left: rect.left + window.scrollX,
-                    top: rect.top + window.scrollY,
-                    width: rect.width,
-                    height: rect.height,
-                });
-            } else {
-                // Si no se encuentra el elemento, intentar de nuevo después de un delay (máximo 10 intentos)
-                const retryCount = findElement.retryCount || 0;
-                if (retryCount < 10) {
-                    findElement.retryCount = retryCount + 1;
-                    timeoutId = setTimeout(findElement, 100);
-                } else {
-                    // Si después de 10 intentos no se encuentra, desactivar el tour
-                    console.warn(`Elemento no encontrado: ${step.target}`);
-                    setIsActive(false);
-                }
-            }
-        };
-
-        findElement.retryCount = 0;
-        findElement();
-
-        // Actualizar posición cuando se hace scroll o resize
-        const updatePosition = () => {
-            const currentElement = elementRef || (typeof step.target === 'string' 
-                ? document.querySelector(step.target)
-                : step.target);
-            if (currentElement) {
+        if (currentElement) {
+            elementRef.current = currentElement;
+            isUpdatingRef.current = true;
+            
+            rafRef.current = requestAnimationFrame(() => {
                 const rect = currentElement.getBoundingClientRect();
                 setTargetRect({
                     left: rect.left + window.scrollX,
@@ -90,20 +53,89 @@ const EnhancedInteractiveTour = ({
                     width: rect.width,
                     height: rect.height,
                 });
+                isUpdatingRef.current = false;
+            });
+        }
+    }, [currentStep, steps]);
+
+    // Encontrar y seguir el elemento objetivo
+    useEffect(() => {
+        if (!isActive || !steps || steps.length === 0) {
+            elementRef.current = null;
+            setTargetRect(null);
+            return;
+        }
+
+        const step = steps[currentStep];
+        if (!step || !step.target) {
+            elementRef.current = null;
+            setTargetRect(null);
+            return;
+        }
+
+        let retryCount = 0;
+        const maxRetries = 10;
+
+        const findElement = () => {
+            const element = typeof step.target === 'string' 
+                ? document.querySelector(step.target)
+                : step.target;
+            
+            if (element) {
+                elementRef.current = element;
+                updatePosition();
+            } else {
+                retryCount++;
+                if (retryCount < maxRetries) {
+                    timeoutRef.current = setTimeout(findElement, 100);
+                } else {
+                    console.warn(`Elemento no encontrado después de ${maxRetries} intentos: ${step.target}`);
+                    setIsActive(false);
+                }
             }
         };
 
-        window.addEventListener('scroll', updatePosition, true);
-        window.addEventListener('resize', updatePosition);
+        findElement();
+
+        // Throttle de eventos de scroll y resize para mejor rendimiento
+        let scrollTimeout = null;
+        const handleScroll = () => {
+            if (scrollTimeout) return;
+            scrollTimeout = setTimeout(() => {
+                updatePosition();
+                scrollTimeout = null;
+            }, 16); // ~60fps
+        };
+
+        let resizeTimeout = null;
+        const handleResize = () => {
+            if (resizeTimeout) return;
+            resizeTimeout = setTimeout(() => {
+                updatePosition();
+                resizeTimeout = null;
+            }, 100);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', handleResize, { passive: true });
 
         return () => {
-            if (timeoutId) {
-                clearTimeout(timeoutId);
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
             }
-            window.removeEventListener('scroll', updatePosition, true);
-            window.removeEventListener('resize', updatePosition);
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+            }
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            if (resizeTimeout) {
+                clearTimeout(resizeTimeout);
+            }
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleResize);
         };
-    }, [isActive, currentStep, steps]);
+    }, [isActive, currentStep, steps, updatePosition]);
 
     if (!isActive || !steps || steps.length === 0) {
         return null;
@@ -165,24 +197,33 @@ const EnhancedInteractiveTour = ({
 
     return (
         <>
-            {/* Overlay oscuro */}
-            <div
-                className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
-                onClick={handleSkip}
-                aria-hidden="true"
-            />
-
-            {/* Highlight del elemento objetivo */}
-            {targetRect && (
+            {/* Overlay oscuro con agujero para el elemento */}
+            {targetRect ? (
+                <>
+                    <div
+                        className="fixed inset-0 z-[9998] backdrop-blur-sm transition-opacity duration-300"
+                        style={{
+                            background: `radial-gradient(ellipse ${Math.max(targetRect.width + 32, 100)}px ${Math.max(targetRect.height + 32, 100)}px at ${targetRect.left + targetRect.width / 2}px ${targetRect.top + targetRect.height / 2}px, transparent 0%, transparent 35%, rgba(0, 0, 0, 0.6) 70%)`,
+                        }}
+                        onClick={handleSkip}
+                        aria-hidden="true"
+                    />
+                    {/* Borde del elemento */}
+                    <div
+                        className="fixed z-[9999] border-4 border-blue-500 rounded-lg pointer-events-none shadow-2xl transition-all duration-200"
+                        style={{
+                            left: `${targetRect.left - 4}px`,
+                            top: `${targetRect.top - 4}px`,
+                            width: `${targetRect.width + 8}px`,
+                            height: `${targetRect.height + 8}px`,
+                        }}
+                    />
+                </>
+            ) : (
                 <div
-                    className="fixed z-[9999] border-4 border-blue-500 rounded-lg pointer-events-none shadow-2xl transition-all duration-300"
-                    style={{
-                        left: `${targetRect.left - 4}px`,
-                        top: `${targetRect.top - 4}px`,
-                        width: `${targetRect.width + 8}px`,
-                        height: `${targetRect.height + 8}px`,
-                        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-                    }}
+                    className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+                    onClick={handleSkip}
+                    aria-hidden="true"
                 />
             )}
 
