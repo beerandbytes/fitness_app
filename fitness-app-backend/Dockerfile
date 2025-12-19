@@ -22,7 +22,7 @@ RUN test -f package.json || (echo "ERROR: package.json not found!" && exit 1)
 
 # Instalar todas las dependencias (incluyendo dev para herramientas de build)
 # No usar --ignore-scripts porque bcrypt necesita compilar módulos nativos
-RUN npm ci && \
+RUN npm install && \
     npm cache clean --force
 
 # Stage 2: Builder (si necesitas compilar algo)
