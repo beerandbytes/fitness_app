@@ -42,12 +42,16 @@ const EnhancedInteractiveTour = ({
             return;
         }
 
+        let timeoutId = null;
+        let elementRef = null;
+
         const findElement = () => {
             const element = typeof step.target === 'string' 
                 ? document.querySelector(step.target)
                 : step.target;
             
             if (element) {
+                elementRef = element;
                 setTargetElement(element);
                 const rect = element.getBoundingClientRect();
                 setTargetRect({
@@ -57,17 +61,29 @@ const EnhancedInteractiveTour = ({
                     height: rect.height,
                 });
             } else {
-                // Si no se encuentra el elemento, intentar de nuevo después de un delay
-                setTimeout(findElement, 100);
+                // Si no se encuentra el elemento, intentar de nuevo después de un delay (máximo 10 intentos)
+                const retryCount = findElement.retryCount || 0;
+                if (retryCount < 10) {
+                    findElement.retryCount = retryCount + 1;
+                    timeoutId = setTimeout(findElement, 100);
+                } else {
+                    // Si después de 10 intentos no se encuentra, desactivar el tour
+                    console.warn(`Elemento no encontrado: ${step.target}`);
+                    setIsActive(false);
+                }
             }
         };
 
+        findElement.retryCount = 0;
         findElement();
 
         // Actualizar posición cuando se hace scroll o resize
         const updatePosition = () => {
-            if (targetElement) {
-                const rect = targetElement.getBoundingClientRect();
+            const currentElement = elementRef || (typeof step.target === 'string' 
+                ? document.querySelector(step.target)
+                : step.target);
+            if (currentElement) {
+                const rect = currentElement.getBoundingClientRect();
                 setTargetRect({
                     left: rect.left + window.scrollX,
                     top: rect.top + window.scrollY,
@@ -81,10 +97,13 @@ const EnhancedInteractiveTour = ({
         window.addEventListener('resize', updatePosition);
 
         return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
             window.removeEventListener('scroll', updatePosition, true);
             window.removeEventListener('resize', updatePosition);
         };
-    }, [isActive, currentStep, steps, targetElement]);
+    }, [isActive, currentStep, steps]);
 
     if (!isActive || !steps || steps.length === 0) {
         return null;
