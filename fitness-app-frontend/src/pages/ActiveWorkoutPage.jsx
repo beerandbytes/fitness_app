@@ -8,6 +8,8 @@ import { ActiveWorkoutPageSkeleton } from '../components/ActiveWorkoutPageSkelet
 import ModernNavbar from '../components/ModernNavbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import AppLayout from '../app/layout/AppLayout';
+import PageContainer from '../shared/components/layout/PageContainer';
 
 const ActiveWorkoutPage = () => {
     const { routineId } = useParams();
@@ -97,7 +99,9 @@ const ActiveWorkoutPage = () => {
 
     useEffect(() => {
         fetchRoutineDetails();
+    }, [fetchRoutineDetails]);
 
+    useEffect(() => {
         // Prevenir salida accidental
         const handleBeforeUnload = (e) => {
             if (workoutStartTime && completedExercises.length < (routine?.exercises?.length || 0)) {
@@ -112,7 +116,7 @@ const ActiveWorkoutPage = () => {
             if (restIntervalRef.current) clearInterval(restIntervalRef.current);
             if (exerciseIntervalRef.current) clearInterval(exerciseIntervalRef.current);
         };
-    }, [fetchRoutineDetails, workoutStartTime, completedExercises.length, routine?.exercises?.length]);
+    }, [workoutStartTime, completedExercises.length, routine?.exercises?.length]);
 
     const handleExit = () => {
         if (completedExercises.length > 0 && completedExercises.length < (routine?.exercises?.length || 0)) {

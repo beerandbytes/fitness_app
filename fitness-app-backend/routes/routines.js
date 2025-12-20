@@ -9,15 +9,15 @@
 
 const express = require('express');
 const router = express.Router();
-const authenticateToken = require('./authMiddleware'); 
+const authenticateToken = require('./authMiddleware');
 const PDFDocument = require('pdfkit');
 
-const { db } = require('../db/db_config'); 
-const schema = require('../db/schema'); 
-const { routines, routineExercises, exercises, routineTemplates, users, scheduledRoutines } = schema; 
+const { db } = require('../db/db_config');
+const schema = require('../db/schema');
+const { routines, routineExercises, exercises, routineTemplates, users, scheduledRoutines } = schema;
 const { eq, and, asc, isNull, sql, count, or } = require('drizzle-orm');
 const logger = require('../utils/logger');
-const asyncHandler = require('../middleware/asyncHandler'); 
+const asyncHandler = require('../middleware/asyncHandler');
 
 /**
  * @swagger
@@ -58,7 +58,7 @@ const asyncHandler = require('../middleware/asyncHandler');
 // 1. Crear una nueva rutina para el usuario logeado
 router.post('/', authenticateToken, asyncHandler(async (req, res) => {
     const user_id = req.user.id;
-    const { name, description } = req.body; 
+    const { name, description } = req.body;
 
     if (!name) {
         return res.status(400).json({ error: 'El nombre de la rutina es obligatorio.' });
@@ -67,7 +67,7 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
     const newRoutine = await db.insert(routines).values({
         user_id: user_id,
         name: name,
-        description: description || null, 
+        description: description || null,
     }).returning({
         routine_id: routines.routine_id,
         name: routines.name,
@@ -77,18 +77,18 @@ router.post('/', authenticateToken, asyncHandler(async (req, res) => {
 
     return res.status(201).json({
         message: 'Rutina creada con éxito.',
-        routine: newRoutine[0] 
+        routine: newRoutine[0]
     });
 }));
 
 // POST /api/routines/from-template - Crear rutina a partir de una plantilla
 router.post('/from-template', authenticateToken, asyncHandler(async (req, res) => {
     const user_id = req.user.id;
-    const { 
-        template_id, 
-        schedule_weeks, 
-        schedule_days_of_week, 
-        schedule_start_date 
+    const {
+        template_id,
+        schedule_weeks,
+        schedule_days_of_week,
+        schedule_start_date
     } = req.body;
 
     if (!template_id) {
@@ -208,13 +208,13 @@ router.post('/from-template', authenticateToken, asyncHandler(async (req, res) =
                 routineName: routines.name,
                 routineDescription: routines.description,
                 routineIsActive: routines.is_active,
-                
+
                 routineExerciseId: routineExercises.routine_exercise_id,
                 exerciseId: exercises.exercise_id,
                 exerciseName: exercises.name,
                 exerciseNameEs: exercises.name_es,
                 exerciseCategory: exercises.category,
-                
+
                 sets: routineExercises.sets,
                 reps: routineExercises.reps,
                 durationMinutes: routineExercises.duration_minutes,
@@ -241,7 +241,7 @@ router.post('/from-template', authenticateToken, asyncHandler(async (req, res) =
                     exercises: []
                 };
             }
-            
+
             if (row.exerciseId !== null) {
                 exercisesListResult.push({
                     routine_exercise_id: row.routineExerciseId,
@@ -279,31 +279,31 @@ router.post('/from-template', authenticateToken, asyncHandler(async (req, res) =
                 // Si no hay días específicos, planificar para toda la semana (lunes a viernes)
                 daysToSchedule = uniqueDaysOfWeek.length > 0 ? uniqueDaysOfWeek : [1, 2, 3, 4, 5]; // Lunes a Viernes por defecto
             }
-            
+
             // Determinar fecha base (usar startDate si se proporciona, sino usar hoy)
             const baseDate = startDate || new Date();
             baseDate.setHours(0, 0, 0, 0); // Normalizar a medianoche
-            
+
             const scheduledDates = [];
 
             for (let week = 0; week < weeks; week++) {
                 for (const dayOfWeek of daysToSchedule) {
                     const targetDate = new Date(baseDate);
-                    
+
                     // Calcular el próximo día de la semana
                     const currentDay = baseDate.getDay(); // 0 = Domingo, 1 = Lunes, etc.
                     let daysUntilTarget = dayOfWeek - currentDay;
-                    
+
                     // Si el día ya pasó esta semana, buscar en la próxima semana
                     if (daysUntilTarget <= 0) {
                         daysUntilTarget += 7;
                     }
-                    
+
                     // Agregar semanas adicionales
                     daysUntilTarget += (week * 7);
-                    
+
                     targetDate.setDate(baseDate.getDate() + daysUntilTarget);
-                    
+
                     scheduledDates.push(targetDate.toISOString().split('T')[0]); // Formato YYYY-MM-DD
                 }
             }
@@ -332,20 +332,20 @@ router.post('/from-template', authenticateToken, asyncHandler(async (req, res) =
                     } catch (insertError) {
                         // Si hay un error de inserción (aunque onConflictDoUpdate debería manejarlo),
                         // simplemente continuamos con la siguiente fecha
-                        logger.warn('Error al insertar fecha programada:', { 
-                            error: insertError.message, 
+                        logger.warn('Error al insertar fecha programada:', {
+                            error: insertError.message,
                             date,
-                            routine_id: newRoutine.routine_id 
+                            routine_id: newRoutine.routine_id
                         });
                     }
                 }
             }
         } catch (scheduleError) {
             // Log el error pero no fallar la creación de la rutina
-            logger.warn('Error al planificar automáticamente la rutina:', { 
-                error: scheduleError.message, 
+            logger.warn('Error al planificar automáticamente la rutina:', {
+                error: scheduleError.message,
                 routine_id: newRoutine.routine_id,
-                user_id 
+                user_id
             });
         }
 
@@ -438,6 +438,26 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
 }));
 
 
+// --- RUTA: GET /api/routines/templates ---
+// 2.5 Listar todas las plantillas de rutinas disponibles (Sistema y Coach)
+router.get('/templates', authenticateToken, asyncHandler(async (req, res) => {
+    // Si queremos filtrar por coach, podríamos usar query params, 
+    // pero por ahora devolvemos todas las plantillas genéricas.
+
+    // Opcional: filtrar plantillas creadas por el "sistema" o por el coach del usuario.
+    // Como simplificación inicial, devolvemos todo lo de la tabla routine_templates
+
+    const templates = await db.select()
+        .from(routineTemplates)
+        .orderBy(asc(routineTemplates.name));
+
+    return res.status(200).json({
+        message: 'Plantillas cargadas con éxito.',
+        templates: templates
+    });
+}));
+
+
 // --- RUTA: GET /api/routines/:routineId ---
 // 3. Obtener una rutina específica con sus ejercicios vinculados
 router.get('/:routineId', authenticateToken, async (req, res) => {
@@ -451,7 +471,7 @@ router.get('/:routineId', authenticateToken, async (req, res) => {
                 routineName: routines.name,
                 routineDescription: routines.description,
                 routineIsActive: routines.is_active,
-                
+
                 routineExerciseId: routineExercises.routine_exercise_id,
                 exerciseId: exercises.exercise_id,
                 exerciseName: exercises.name,
@@ -459,7 +479,7 @@ router.get('/:routineId', authenticateToken, async (req, res) => {
                 exerciseCategory: exercises.category,
                 exerciseGifUrl: exercises.gif_url,
                 exerciseVideoUrl: exercises.video_url,
-                
+
                 sets: routineExercises.sets,
                 reps: routineExercises.reps,
                 durationMinutes: routineExercises.duration_minutes,
@@ -476,7 +496,7 @@ router.get('/:routineId', authenticateToken, async (req, res) => {
             ))
             .orderBy(asc(routineExercises.day_of_week), asc(routineExercises.order_index));
 
-        
+
         if (results.length === 0) {
             return res.status(404).json({ error: 'Rutina no encontrada o no pertenece al usuario.' });
         }
@@ -492,10 +512,10 @@ router.get('/:routineId', authenticateToken, async (req, res) => {
                     name: row.routineName,
                     description: row.routineDescription,
                     is_active: row.routineIsActive,
-                    exercises: [] 
+                    exercises: []
                 };
             }
-            
+
             if (row.exerciseId !== null) {
                 exercisesList.push({
                     routine_exercise_id: row.routineExerciseId,
@@ -516,7 +536,7 @@ router.get('/:routineId', authenticateToken, async (req, res) => {
         }
 
         if (routineData) {
-             routineData.exercises = exercisesList;
+            routineData.exercises = exercisesList;
         }
 
         return res.status(200).json({
@@ -540,10 +560,10 @@ router.put('/:routineId', authenticateToken, async (req, res) => {
     const { name, description } = req.body;
 
     // Solo se permite actualizar si se proporciona al menos uno de los campos
-    if (!name && description === undefined) { 
+    if (!name && description === undefined) {
         return res.status(400).json({ error: 'Se requiere al menos el nombre o la descripción para actualizar.' });
     }
-    
+
     // Objeto con los campos a actualizar
     const updateFields = {};
     if (name) updateFields.name = name;
@@ -579,11 +599,11 @@ router.put('/:routineId', authenticateToken, async (req, res) => {
 router.delete('/:routineId', authenticateToken, async (req, res) => {
     const user_id = req.user.id;
     const routine_id = parseInt(req.params.routineId);
-    
+
     try {
         // Usamos .update() para marcar is_active=false (eliminación suave/soft delete)
         const deactivatedRoutine = await db.update(routines)
-            .set({ is_active: false }) 
+            .set({ is_active: false })
             .where(and(eq(routines.routine_id, routine_id), eq(routines.user_id, user_id)))
             .returning();
 
@@ -591,7 +611,7 @@ router.delete('/:routineId', authenticateToken, async (req, res) => {
             // Si no se actualizó, es porque no existe o no pertenece al usuario
             return res.status(404).json({ error: 'Rutina no encontrada o no pertenece al usuario.' });
         }
-        
+
         return res.status(200).json({
             message: 'Rutina desactivada (eliminada) con éxito.',
             routine_id: routine_id,
@@ -611,14 +631,14 @@ router.post('/:routineId/exercises', authenticateToken, async (req, res) => {
     const user_id = req.user.id;
     const routine_id = parseInt(req.params.routineId);
 
-    const { 
-        exercise_id, 
-        sets, 
-        reps, 
-        duration_minutes, 
-        weight_kg, 
+    const {
+        exercise_id,
+        sets,
+        reps,
+        duration_minutes,
+        weight_kg,
         order_index,
-        day_of_week 
+        day_of_week
     } = req.body;
 
     if (!exercise_id || !sets || !order_index) {
@@ -638,7 +658,7 @@ router.post('/:routineId/exercises', authenticateToken, async (req, res) => {
             routine_id: routine_id,
             exercise_id: exercise_id,
             sets: sets,
-            reps: reps || null, 
+            reps: reps || null,
             duration_minutes: duration_minutes || null,
             weight_kg: weight_kg || 0,
             order_index: order_index,
@@ -651,7 +671,7 @@ router.post('/:routineId/exercises', authenticateToken, async (req, res) => {
         });
 
     } catch (error) {
-        if (error.code === '23505') { 
+        if (error.code === '23505') {
             return res.status(409).json({ error: 'Este ejercicio ya está agregado a esta rutina.' });
         }
         logger.error('Error al vincular ejercicio a rutina:', { error: error.message, stack: error.stack, user_id, routine_id });
@@ -677,7 +697,7 @@ router.delete('/:routineId/exercises/:routineExerciseId', authenticateToken, asy
         if (routineCheck.length === 0) {
             return res.status(404).json({ error: 'Rutina no encontrada o no pertenece al usuario.' });
         }
-        
+
         // 2. Verificar que el routine_exercise_id pertenece a esta rutina
         const exerciseCheck = await db.select()
             .from(routineExercises)
@@ -689,7 +709,7 @@ router.delete('/:routineId/exercises/:routineExerciseId', authenticateToken, asy
         if (exerciseCheck.length === 0) {
             return res.status(404).json({ error: 'El ejercicio no está vinculado a esta rutina.' });
         }
-        
+
         // 3. Eliminar el registro específico en la tabla routine_exercises
         const deletedExercise = await db.delete(routineExercises)
             .where(eq(routineExercises.routine_exercise_id, routine_exercise_id))
@@ -723,13 +743,13 @@ router.get('/:routineId/export/pdf', authenticateToken, asyncHandler(async (req,
                 routineName: routines.name,
                 routineDescription: routines.description,
                 routineIsActive: routines.is_active,
-                
+
                 routineExerciseId: routineExercises.routine_exercise_id,
                 exerciseId: exercises.exercise_id,
                 exerciseName: exercises.name,
                 exerciseNameEs: exercises.name_es,
                 exerciseCategory: exercises.category,
-                
+
                 sets: routineExercises.sets,
                 reps: routineExercises.reps,
                 durationMinutes: routineExercises.duration_minutes,
@@ -764,7 +784,7 @@ router.get('/:routineId/export/pdf', authenticateToken, asyncHandler(async (req,
                     exercises: []
                 };
             }
-            
+
             if (row.exerciseId !== null) {
                 exercisesList.push({
                     routine_exercise_id: row.routineExerciseId,
@@ -802,16 +822,16 @@ router.get('/:routineId/export/pdf', authenticateToken, asyncHandler(async (req,
 
         // Título
         doc.fontSize(24)
-           .font('Helvetica-Bold')
-           .text(routineData.name, { align: 'center' });
+            .font('Helvetica-Bold')
+            .text(routineData.name, { align: 'center' });
 
         doc.moveDown();
 
         // Descripción
         if (routineData.description) {
             doc.fontSize(12)
-               .font('Helvetica')
-               .text(routineData.description, { align: 'center' });
+                .font('Helvetica')
+                .text(routineData.description, { align: 'center' });
             doc.moveDown();
         }
 
@@ -836,14 +856,14 @@ router.get('/:routineId/export/pdf', authenticateToken, asyncHandler(async (req,
         // Ejercicios por día
         Object.keys(exercisesByDay).sort().forEach(day => {
             doc.fontSize(16)
-               .font('Helvetica-Bold')
-               .text(dayNames[parseInt(day)], { underline: true });
+                .font('Helvetica-Bold')
+                .text(dayNames[parseInt(day)], { underline: true });
             doc.moveDown(0.5);
 
             exercisesByDay[day].forEach((ex, idx) => {
                 doc.fontSize(12)
-                   .font('Helvetica-Bold')
-                   .text(`${idx + 1}. ${ex.name}`, { indent: 20 });
+                    .font('Helvetica-Bold')
+                    .text(`${idx + 1}. ${ex.name}`, { indent: 20 });
 
                 let details = `   Series: ${ex.sets}`;
                 if (ex.reps) details += ` × ${ex.reps} repeticiones`;
@@ -851,8 +871,8 @@ router.get('/:routineId/export/pdf', authenticateToken, asyncHandler(async (req,
                 if (ex.weight_kg && parseFloat(ex.weight_kg) > 0) details += ` @ ${ex.weight_kg}kg`;
 
                 doc.fontSize(10)
-                   .font('Helvetica')
-                   .text(details, { indent: 20 });
+                    .font('Helvetica')
+                    .text(details, { indent: 20 });
                 doc.moveDown(0.3);
             });
 
@@ -862,14 +882,14 @@ router.get('/:routineId/export/pdf', authenticateToken, asyncHandler(async (req,
         // Ejercicios sin día específico
         if (exercisesNoDay.length > 0) {
             doc.fontSize(16)
-               .font('Helvetica-Bold')
-               .text('Ejercicios (todos los días)', { underline: true });
+                .font('Helvetica-Bold')
+                .text('Ejercicios (todos los días)', { underline: true });
             doc.moveDown(0.5);
 
             exercisesNoDay.forEach((ex, idx) => {
                 doc.fontSize(12)
-                   .font('Helvetica-Bold')
-                   .text(`${idx + 1}. ${ex.name}`, { indent: 20 });
+                    .font('Helvetica-Bold')
+                    .text(`${idx + 1}. ${ex.name}`, { indent: 20 });
 
                 let details = `   Series: ${ex.sets}`;
                 if (ex.reps) details += ` × ${ex.reps} repeticiones`;
@@ -877,8 +897,8 @@ router.get('/:routineId/export/pdf', authenticateToken, asyncHandler(async (req,
                 if (ex.weight_kg && parseFloat(ex.weight_kg) > 0) details += ` @ ${ex.weight_kg}kg`;
 
                 doc.fontSize(10)
-                   .font('Helvetica')
-                   .text(details, { indent: 20 });
+                    .font('Helvetica')
+                    .text(details, { indent: 20 });
                 doc.moveDown(0.3);
             });
         }
@@ -886,13 +906,13 @@ router.get('/:routineId/export/pdf', authenticateToken, asyncHandler(async (req,
         // Footer
         doc.moveDown(2);
         doc.fontSize(8)
-           .font('Helvetica')
-           .fillColor('gray')
-           .text(`Generado el ${new Date().toLocaleDateString('es-ES', { 
-               year: 'numeric', 
-               month: 'long', 
-               day: 'numeric' 
-           })}`, { align: 'center' });
+            .font('Helvetica')
+            .fillColor('gray')
+            .text(`Generado el ${new Date().toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}`, { align: 'center' });
 
         // Finalizar PDF
         doc.end();
