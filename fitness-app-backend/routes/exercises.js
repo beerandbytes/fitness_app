@@ -120,36 +120,36 @@ router.get('/',
             const cacheKey = `exercises:public:page:${page}:limit:${limit}`;
 
             // Obtener o establecer cache
-            const result = await getOrSetCache(cacheKey, async () => {
-                // Consultar ejercicios con paginación
-                const allExercises = await db.select()
-                    .from(exercises)
-                    .where(eq(exercises.is_public, true))
-                    .orderBy(asc(exercises.name))
-                    .limit(limit)
-                    .offset(offset);
+            // const result = await getOrSetCache(cacheKey, async () => {
+            // Consultar ejercicios con paginación
+            const allExercises = await db.select()
+                .from(exercises)
+                .where(eq(exercises.is_public, true))
+                .orderBy(asc(exercises.name))
+                .limit(limit)
+                .offset(offset);
 
-                // Obtener total de ejercicios
-                const totalResult = await db.select({
-                    count: sql`count(*)`.as('count')
-                })
-                    .from(exercises)
-                    .where(eq(exercises.is_public, true));
+            // Obtener total de ejercicios
+            const totalResult = await db.select({
+                count: sql`count(*)`.as('count')
+            })
+                .from(exercises)
+                .where(eq(exercises.is_public, true));
 
-                const total = parseInt(totalResult[0].count);
+            const total = parseInt(totalResult[0].count);
 
-                return {
-                    exercises: allExercises,
-                    pagination: {
-                        page,
-                        limit,
-                        total,
-                        totalPages: Math.ceil(total / limit),
-                        hasNext: page < Math.ceil(total / limit),
-                        hasPrev: page > 1
-                    }
-                };
-            }, 300); // Cache por 5 minutos
+            const result = {
+                exercises: allExercises,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                    hasNext: page < Math.ceil(total / limit),
+                    hasPrev: page > 1
+                }
+            };
+            // }, 300); // Cache por 5 minutos
 
             return res.status(200).json({
                 message: 'Catálogo de ejercicios cargado con éxito.',
