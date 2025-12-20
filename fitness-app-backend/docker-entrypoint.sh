@@ -9,6 +9,17 @@ npm run db:migrate 2>&1 || {
     node scripts/fix_exercises_schema.js 2>&1 || echo "❌ El parche manual también falló."
 }
 
+    node scripts/fix_exercises_schema.js 2>&1 || echo "❌ El parche manual también falló."
+}
+
+# ESPERAR a que los cambios de esquema se propaguen
+# Esto es CRÍTICO: verifica que la columna 'name_es' realmente exista antes de insertar datos
+echo "⏳ Verificando esquema de base de datos..."
+node scripts/verify_db_columns.js 2>&1 || {
+    echo "❌ Error crítico: Las columnas necesarias no existen. Abortando seed."
+    exit 1
+}
+
 # Poblar datos iniciales si es necesario (ejercicios y alimentos)
 # Esto revisa si las tablas están vacías y las llena automáticamente
 echo "🌱 Verificando/Poblando datos iniciales..."
