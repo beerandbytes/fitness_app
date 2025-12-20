@@ -68,7 +68,7 @@ async function seedAll() {
         // Verificar y poblar ejercicios
         console.log('📊 Verificando ejercicios...');
         const exerciseCount = await checkExercisesCount();
-        
+
         if (exerciseCount === 0) {
             console.log('⚠️  No se encontraron ejercicios públicos. Poblando ejercicios...');
             // Nota: Los scripts hijos se ejecutan en procesos separados, así que no comparten el pool
@@ -76,12 +76,12 @@ async function seedAll() {
             try {
                 // Ejecutar script de población de ejercicios como proceso hijo
                 // El script hijo creará su propio pool de conexiones (proceso separado)
-                execSync('npm run populate:exercises', { 
+                execSync('npm run populate:exercises', {
                     stdio: 'inherit',
                     cwd: process.cwd(),
                     encoding: 'utf8'
                 });
-                
+
                 // Verificar que realmente se insertaron ejercicios
                 // Las conexiones del pool se liberan automáticamente después de cada query
                 const newExerciseCount = await checkExercisesCount();
@@ -92,7 +92,7 @@ async function seedAll() {
                 }
             } catch (error) {
                 console.error('❌ Error al poblar ejercicios con populate:exercises:', error.message);
-                
+
                 // Verificar si al menos se insertaron algunos ejercicios
                 const currentCount = await checkExercisesCount();
                 if (currentCount > 0) {
@@ -101,12 +101,12 @@ async function seedAll() {
                     // Intentar con el seed básico como fallback
                     try {
                         console.log('🔄 Intentando con seed básico...');
-                        execSync('npm run seed:exercises', { 
+                        execSync('npm run seed:exercises', {
                             stdio: 'inherit',
                             cwd: process.cwd(),
                             encoding: 'utf8'
                         });
-                        
+
                         const fallbackCount = await checkExercisesCount();
                         if (fallbackCount > 0) {
                             console.log(`✅ Ejercicios básicos poblados como fallback (${fallbackCount} ejercicios)\n`);
@@ -125,18 +125,18 @@ async function seedAll() {
         // Verificar y poblar alimentos
         console.log('📊 Verificando alimentos...');
         const foodCount = await checkFoodsCount();
-        
+
         if (foodCount === 0) {
             console.log('⚠️  No se encontraron alimentos. Poblando alimentos comunes...');
             // Nota: Los scripts hijos se ejecutan en procesos separados, así que no comparten el pool
             try {
                 // Ejecutar script de alimentos como proceso hijo
-                execSync('npm run seed:foods', { 
+                execSync('npm run seed:foods', {
                     stdio: 'inherit',
                     cwd: process.cwd(),
                     encoding: 'utf8'
                 });
-                
+
                 // Verificar que realmente se insertaron alimentos
                 // Las conexiones del pool se liberan automáticamente después de cada query
                 const newFoodCount = await checkFoodsCount();
@@ -147,15 +147,55 @@ async function seedAll() {
                 }
             } catch (error) {
                 console.error('❌ Error al poblar alimentos:', error.message);
-                
+
                 // Verificar si al menos se insertaron algunos alimentos
                 const currentCount = await checkFoodsCount();
                 if (currentCount > 0) {
                     console.log(`⚠️  Se insertaron ${currentCount} alimentos antes del error. Continuando...\n`);
                 }
             }
+
+            // Poblar alimentos españoles adicionales
+            try {
+                console.log('📊 Poblando alimentos en español...');
+                execSync('npm run seed:foods:spanish', {
+                    stdio: 'inherit',
+                    cwd: process.cwd(),
+                    encoding: 'utf8'
+                });
+
+                const spanishFoodCount = await checkFoodsCount();
+                console.log(`✅ Alimentos en español poblados (${spanishFoodCount} alimentos totales)\n`);
+            } catch (error) {
+                console.error('⚠️  Error al poblar alimentos españoles:', error.message);
+                console.log('   Continuando con los alimentos básicos...\n');
+            }
         } else {
             console.log(`✅ Se encontraron ${foodCount} alimentos. No es necesario poblar.\n`);
+        }
+
+        // Poblar rutinas predefinidas (plantillas de ejemplo para usuarios)
+        try {
+            console.log('📋 Verificando rutinas predefinidas...');
+            const routinesResult = await db.execute(
+                sql`SELECT COUNT(*) as count FROM workout_templates WHERE is_public = true`
+            );
+            const routinesCount = parseInt(routinesResult.rows[0]?.count || 0);
+
+            if (routinesCount === 0) {
+                console.log('📋 Poblando rutinas predefinidas...');
+                execSync('npm run seed:predefined-routines', {
+                    stdio: 'inherit',
+                    cwd: process.cwd(),
+                    encoding: 'utf8'
+                });
+                console.log('✅ Rutinas predefinidas pobladas\n');
+            } else {
+                console.log(`✅ Se encontraron ${routinesCount} rutinas predefinidas. No es necesario poblar.\n`);
+            }
+        } catch (error) {
+            console.error('⚠️  Error al poblar rutinas predefinidas:', error.message);
+            console.log('   Continuando sin rutinas predefinidas...\n');
         }
 
         // Verificar resultado final
@@ -193,7 +233,7 @@ async function seedAll() {
                 // Usar Promise.race con timeout para evitar que se cuelgue
                 await Promise.race([
                     pool.end(),
-                    new Promise((_, reject) => 
+                    new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('Timeout cerrando pool')), 5000)
                     )
                 ]).catch(err => {
@@ -201,7 +241,7 @@ async function seedAll() {
                     console.warn('⚠️  Advertencia al cerrar pool:', err.message);
                     // Forzar cierre de todas las conexiones
                     if (pool && pool.end) {
-                        pool.end().catch(() => {}); // Ignorar errores al forzar cierre
+                        pool.end().catch(() => { }); // Ignorar errores al forzar cierre
                     }
                 });
                 console.log('✅ Conexiones cerradas');
