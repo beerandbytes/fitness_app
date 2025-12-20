@@ -29,7 +29,7 @@ const sampleExercises = [
     { name: 'Decline Dumbbell Fly', name_es: 'Aperturas Declinadas con Mancuernas', category: 'Fuerza', default_calories_per_minute: '4' },
     { name: 'Chest Dips', name_es: 'Fondos de Pecho', category: 'Fuerza', default_calories_per_minute: '7' },
     { name: 'Pullover', name_es: 'Jalón por Encima', category: 'Fuerza', default_calories_per_minute: '5' },
-    
+
     // ============================================
     // EJERCICIOS DE ESPALDA
     // ============================================
@@ -56,7 +56,7 @@ const sampleExercises = [
     { name: 'Romanian Deadlift', name_es: 'Peso Muerto Rumano', category: 'Fuerza', default_calories_per_minute: '8' },
     { name: 'Stiff Leg Deadlift', name_es: 'Peso Muerto Piernas Rígidas', category: 'Fuerza', default_calories_per_minute: '8' },
     { name: 'Sumo Deadlift', name_es: 'Peso Muerto Sumo', category: 'Fuerza', default_calories_per_minute: '9' },
-    
+
     // ============================================
     // EJERCICIOS DE PIERNAS
     // ============================================
@@ -91,7 +91,7 @@ const sampleExercises = [
     { name: 'Pistol Squat', name_es: 'Sentadilla Pistola', category: 'Fuerza', default_calories_per_minute: '9' },
     { name: 'Hack Squat', name_es: 'Sentadilla Hack', category: 'Fuerza', default_calories_per_minute: '8' },
     { name: 'Sissy Squat', name_es: 'Sentadilla Sissy', category: 'Fuerza', default_calories_per_minute: '7' },
-    
+
     // ============================================
     // EJERCICIOS DE HOMBROS
     // ============================================
@@ -113,7 +113,7 @@ const sampleExercises = [
     { name: 'Face Pull', name_es: 'Jalón Facial', category: 'Fuerza', default_calories_per_minute: '5' },
     { name: 'Cuban Press', name_es: 'Press Cubano', category: 'Fuerza', default_calories_per_minute: '5' },
     { name: 'Bent Over Lateral Raise', name_es: 'Elevación Lateral Inclinado', category: 'Fuerza', default_calories_per_minute: '4' },
-    
+
     // ============================================
     // EJERCICIOS DE BÍCEPS
     // ============================================
@@ -129,7 +129,7 @@ const sampleExercises = [
     { name: '21s', name_es: 'Curl 21s', category: 'Fuerza', default_calories_per_minute: '5' },
     { name: 'Zottman Curl', name_es: 'Curl Zottman', category: 'Fuerza', default_calories_per_minute: '4' },
     { name: 'Cross Body Hammer Curl', name_es: 'Curl Martillo Cruzado', category: 'Fuerza', default_calories_per_minute: '4' },
-    
+
     // ============================================
     // EJERCICIOS DE TRÍCEPS
     // ============================================
@@ -147,7 +147,7 @@ const sampleExercises = [
     { name: 'Overhead Cable Extension', name_es: 'Extensión con Cable por Encima', category: 'Fuerza', default_calories_per_minute: '4' },
     { name: 'Bench Dip', name_es: 'Fondos en Banco', category: 'Fuerza', default_calories_per_minute: '6' },
     { name: 'Tricep Rope Pushdown', name_es: 'Extensión de Tríceps con Cuerda', category: 'Fuerza', default_calories_per_minute: '4' },
-    
+
     // ============================================
     // EJERCICIOS DE CORE/ABDOMINALES
     // ============================================
@@ -177,7 +177,7 @@ const sampleExercises = [
     { name: 'Plank Jack', name_es: 'Plancha con Salto', category: 'Fuerza', default_calories_per_minute: '9' },
     { name: 'Side Crunch', name_es: 'Abdominales Laterales', category: 'Fuerza', default_calories_per_minute: '5' },
     { name: 'Oblique Crunch', name_es: 'Abdominales Oblicuos', category: 'Fuerza', default_calories_per_minute: '5' },
-    
+
     // ============================================
     // EJERCICIOS DE CARDIO
     // ============================================
@@ -209,7 +209,7 @@ const sampleExercises = [
     { name: 'Rowing Machine', name_es: 'Máquina de Remo', category: 'Cardio', default_calories_per_minute: '12' },
     { name: 'Cross Trainer', name_es: 'Entrenador Cruzado', category: 'Cardio', default_calories_per_minute: '10' },
     { name: 'Stepper', name_es: 'Stepper', category: 'Cardio', default_calories_per_minute: '11' },
-    
+
     // ============================================
     // EJERCICIOS HÍBRIDOS
     // ============================================
@@ -243,7 +243,7 @@ const sampleExercises = [
 
 async function seedExercises() {
     console.log('🌱 Poblando base de datos con ejercicios de ejemplo...');
-    
+
     try {
         for (const exercise of sampleExercises) {
             try {
@@ -260,10 +260,14 @@ async function seedExercises() {
                     console.log(`⚠️  ${exercise.name} ya existe, saltando...`);
                 } else {
                     console.error(`❌ Error al agregar ${exercise.name}:`, error.message);
+                    console.error('   Detalles:', error.detail || 'N/A');
+                    console.error('   Hint:', error.hint || 'N/A');
+                    console.error('   Code:', error.code || 'N/A');
+                    if (error.cause) console.error('   Cause:', error.cause);
                 }
             }
         }
-        
+
         console.log('✅ Proceso completado!');
     } catch (error) {
         console.error('❌ Error en el proceso:', error);

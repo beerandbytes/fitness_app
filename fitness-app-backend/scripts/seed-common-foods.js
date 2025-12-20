@@ -23,7 +23,7 @@ const commonFoods = [
     { name: 'Yogur griego natural', calories_base: 59, protein_g: 10, carbs_g: 3.6, fat_g: 0.4 },
     { name: 'Queso cottage', calories_base: 98, protein_g: 11, carbs_g: 3.4, fat_g: 4.3 },
     { name: 'Pechuga de pollo a la plancha', calories_base: 165, protein_g: 31, carbs_g: 0, fat_g: 3.6 },
-    
+
     // Carbohidratos
     { name: 'Arroz blanco (cocido)', calories_base: 130, protein_g: 2.7, carbs_g: 28, fat_g: 0.3 },
     { name: 'Arroz integral (cocido)', calories_base: 111, protein_g: 2.6, carbs_g: 23, fat_g: 0.9 },
@@ -36,7 +36,7 @@ const commonFoods = [
     { name: 'Patata (cocida)', calories_base: 87, protein_g: 2, carbs_g: 20, fat_g: 0.1 },
     { name: 'Batata (cocida)', calories_base: 86, protein_g: 1.6, carbs_g: 20, fat_g: 0.1 },
     { name: 'Plátano', calories_base: 89, protein_g: 1.1, carbs_g: 23, fat_g: 0.3 },
-    
+
     // Verduras
     { name: 'Brócoli (cocido)', calories_base: 35, protein_g: 2.8, carbs_g: 7, fat_g: 0.4 },
     { name: 'Espinacas (cocidas)', calories_base: 23, protein_g: 3, carbs_g: 3.8, fat_g: 0.3 },
@@ -46,31 +46,31 @@ const commonFoods = [
     { name: 'Pepino', calories_base: 16, protein_g: 0.7, carbs_g: 4, fat_g: 0.1 },
     { name: 'Cebolla', calories_base: 40, protein_g: 1.1, carbs_g: 9.3, fat_g: 0.1 },
     { name: 'Pimiento rojo', calories_base: 31, protein_g: 1, carbs_g: 7, fat_g: 0.3 },
-    
+
     // Frutas
     { name: 'Manzana', calories_base: 52, protein_g: 0.3, carbs_g: 14, fat_g: 0.2 },
     { name: 'Naranja', calories_base: 47, protein_g: 0.9, carbs_g: 12, fat_g: 0.1 },
     { name: 'Fresa', calories_base: 32, protein_g: 0.7, carbs_g: 7.7, fat_g: 0.3 },
     { name: 'Uvas', calories_base: 69, protein_g: 0.7, carbs_g: 18, fat_g: 0.2 },
     { name: 'Pera', calories_base: 57, protein_g: 0.4, carbs_g: 15, fat_g: 0.1 },
-    
+
     // Legumbres
     { name: 'Lentejas (cocidas)', calories_base: 116, protein_g: 9, carbs_g: 20, fat_g: 0.4 },
     { name: 'Garbanzos (cocidos)', calories_base: 164, protein_g: 8.9, carbs_g: 27, fat_g: 2.6 },
     { name: 'Judías negras (cocidas)', calories_base: 132, protein_g: 8.9, carbs_g: 24, fat_g: 0.5 },
-    
+
     // Frutos secos y semillas
     { name: 'Almendras', calories_base: 579, protein_g: 21, carbs_g: 22, fat_g: 50 },
     { name: 'Nueces', calories_base: 654, protein_g: 15, carbs_g: 14, fat_g: 65 },
     { name: 'Avellanas', calories_base: 628, protein_g: 15, carbs_g: 17, fat_g: 61 },
     { name: 'Aguacate', calories_base: 160, protein_g: 2, carbs_g: 9, fat_g: 15 },
-    
+
     // Lácteos
     { name: 'Leche entera', calories_base: 61, protein_g: 3.3, carbs_g: 4.8, fat_g: 3.3 },
     { name: 'Leche desnatada', calories_base: 34, protein_g: 3.4, carbs_g: 5, fat_g: 0.1 },
     { name: 'Queso mozzarella', calories_base: 300, protein_g: 22, carbs_g: 2.2, fat_g: 22 },
     { name: 'Queso cheddar', calories_base: 402, protein_g: 25, carbs_g: 1.3, fat_g: 33 },
-    
+
     // Otros
     { name: 'Aceite de oliva', calories_base: 884, protein_g: 0, carbs_g: 0, fat_g: 100 },
     { name: 'Miel', calories_base: 304, protein_g: 0.3, carbs_g: 82, fat_g: 0 },
@@ -81,7 +81,7 @@ const commonFoods = [
 
 async function seedCommonFoods() {
     console.log('🌱 Iniciando poblamiento de alimentos comunes...\n');
-    
+
     let totalInserted = 0;
     let totalUpdated = 0;
     let totalSkipped = 0;
@@ -98,7 +98,7 @@ async function seedCommonFoods() {
             if (existing.length > 0) {
                 // Actualizar si existe pero con valores diferentes
                 const existingFood = existing[0];
-                const needsUpdate = 
+                const needsUpdate =
                     parseFloat(existingFood.calories_base) !== food.calories_base ||
                     parseFloat(existingFood.protein_g || 0) !== food.protein_g ||
                     parseFloat(existingFood.carbs_g || 0) !== food.carbs_g ||
@@ -136,6 +136,10 @@ async function seedCommonFoods() {
                 totalSkipped++;
             } else {
                 console.error(`❌ Error con ${food.name}:`, error.message);
+                console.error('   Detalles:', error.detail || 'N/A');
+                console.error('   Hint:', error.hint || 'N/A');
+                console.error('   Code:', error.code || 'N/A');
+                if (error.cause) console.error('   Cause:', error.cause);
                 totalErrors++;
             }
         }
@@ -148,7 +152,7 @@ async function seedCommonFoods() {
     console.log(`   - Alimentos omitidos: ${totalSkipped}`);
     console.log(`   - Errores: ${totalErrors}`);
     console.log(`   - Total procesado: ${totalInserted + totalUpdated + totalSkipped} de ${commonFoods.length}`);
-    
+
     process.exit(0);
 }
 
