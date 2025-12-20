@@ -438,24 +438,7 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
 }));
 
 
-// --- RUTA: GET /api/routines/templates ---
-// 2.5 Listar todas las plantillas de rutinas disponibles (Sistema y Coach)
-router.get('/templates', authenticateToken, asyncHandler(async (req, res) => {
-    // Si queremos filtrar por coach, podríamos usar query params, 
-    // pero por ahora devolvemos todas las plantillas genéricas.
 
-    // Opcional: filtrar plantillas creadas por el "sistema" o por el coach del usuario.
-    // Como simplificación inicial, devolvemos todo lo de la tabla routine_templates
-
-    const templates = await db.select()
-        .from(routineTemplates)
-        .orderBy(asc(routineTemplates.name));
-
-    return res.status(200).json({
-        message: 'Plantillas cargadas con éxito.',
-        templates: templates
-    });
-}));
 
 
 // --- RUTA: GET /api/routines/:routineId ---

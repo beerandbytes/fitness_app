@@ -1,7 +1,7 @@
 // Utilidad para registrar el Service Worker
 export const registerServiceWorker = () => {
-  // Solo registrar en producción y si el service worker está disponible
-  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  // Registrar en producción y desarrollo para verificar PWA
+  if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('/sw.js')

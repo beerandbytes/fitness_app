@@ -58,7 +58,7 @@ const RoutinesPage = () => {
     const fetchTemplates = async () => {
         try {
             setLoadingTemplates(true);
-            const response = await api.get('/routines/templates');
+            const response = await api.get('/templates/routines/predefined');
             setTemplates(response.data.templates || []);
         } catch (err) {
             logger.error('Error fetching templates:', err);
@@ -303,8 +303,8 @@ const RoutinesPage = () => {
                                         placeholder="Ej: Rutina de Fuerza"
                                         {...register('name')}
                                         className={`w-full px-4 py-3.5 bg-gray-50 dark:bg-gray-800 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 dark:focus:border-blue-400 transition-all text-gray-900 dark:text-white ${errors.name
-                                                ? 'border-red-300 dark:border-red-700'
-                                                : 'border-gray-300 dark:border-gray-700'
+                                            ? 'border-red-300 dark:border-red-700'
+                                            : 'border-gray-300 dark:border-gray-700'
                                             }`}
                                     />
                                     {errors.name && (
@@ -321,8 +321,8 @@ const RoutinesPage = () => {
                                         placeholder="Describe los objetivos de esta rutina..."
                                         {...register('description')}
                                         className={`w-full px-4 py-3.5 bg-gray-50 dark:bg-gray-800 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 dark:focus:border-blue-400 transition-all h-24 resize-none text-gray-900 dark:text-white ${errors.description
-                                                ? 'border-red-300 dark:border-red-700'
-                                                : 'border-gray-300 dark:border-gray-700'
+                                            ? 'border-red-300 dark:border-red-700'
+                                            : 'border-gray-300 dark:border-gray-700'
                                             }`}
                                         rows="4"
                                     />

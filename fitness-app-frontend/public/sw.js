@@ -26,12 +26,13 @@ const API_CACHE_MAX_AGE = 5 * 60 * 1000; // 5 minutos
 
 // Instalación del Service Worker
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing Service Worker...', CACHE_NAME);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         // Intentar cachear archivos, pero no fallar si algunos no existen
         return Promise.allSettled(
-          STATIC_ASSETS.map(url => 
+          STATIC_ASSETS.map(url =>
             cache.add(url).catch(() => {
               // Silenciar errores de archivos que no existen
               return null;
@@ -58,20 +59,20 @@ self.addEventListener('activate', (event) => {
         cacheNames
           .filter((cacheName) => {
             // Eliminar caches antiguos
-            return cacheName !== CACHE_NAME && 
-                   cacheName !== RUNTIME_CACHE && 
-                   cacheName !== API_CACHE &&
-                   cacheName !== IMAGE_CACHE;
+            return cacheName !== CACHE_NAME &&
+              cacheName !== RUNTIME_CACHE &&
+              cacheName !== API_CACHE &&
+              cacheName !== IMAGE_CACHE;
           })
           .map((cacheName) => {
             return caches.delete(cacheName);
           })
       );
     })
-    .then(() => {
-      // Tomar control de todas las páginas
-      return self.clients.claim();
-    })
+      .then(() => {
+        // Tomar control de todas las páginas
+        return self.clients.claim();
+      })
   );
 });
 
@@ -134,7 +135,7 @@ self.addEventListener('fetch', (event) => {
           }).catch(() => {
             // Si falla la red, devolver cached si existe
             return cachedResponse || new Response(
-              JSON.stringify({ error: 'Sin conexión' }), 
+              JSON.stringify({ error: 'Sin conexión' }),
               { status: 503, headers: { 'Content-Type': 'application/json' } }
             );
           });
@@ -195,7 +196,7 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
+
   // Background sync para procesar cola offline
   if (event.data && event.data.type === 'SYNC_OFFLINE_QUEUE') {
     event.waitUntil(
