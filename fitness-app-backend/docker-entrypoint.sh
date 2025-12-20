@@ -5,8 +5,8 @@ echo "🚀 Iniciando aplicación..."
 # Ejecutar migraciones (no bloquea si fallan)
 echo "📦 Ejecutando migraciones de base de datos..."
 npm run db:migrate 2>&1 || {
-    echo "⚠️  Advertencia: Las migraciones fallaron, pero continuando..."
-    echo "   El servidor iniciará de todas formas. Las migraciones se pueden ejecutar manualmente después."
+    echo "⚠️  Advertencia: Las migraciones fallaron. Intentando parche manual..."
+    node scripts/fix_exercises_schema.js 2>&1 || echo "❌ El parche manual también falló."
 }
 
 # Verificar variables de entorno críticas
