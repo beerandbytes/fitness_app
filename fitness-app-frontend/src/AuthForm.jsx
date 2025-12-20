@@ -4,19 +4,19 @@ import useBrandStore from './stores/useBrandStore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ValidatedInput from './components/ValidatedInput';
 import SocialAuth from './components/SocialAuth';
-import { emailValidator, passwordValidator } from './utils/validators'; 
+import { emailValidator, passwordValidator } from './utils/validators';
 
 const AuthForm = () => {
     const location = useLocation();
     const isLogin = location.pathname === '/login';
     const navigate = useNavigate();
-    
+
     const login = useUserStore((state) => state.login);
     const register = useUserStore((state) => state.register);
     const isAuthenticated = useUserStore((state) => state.isAuthenticated());
     const user = useUserStore((state) => state.user);
     const brandSettings = useBrandStore((state) => state.brandSettings);
-    
+
     // Obtener la primera letra del nombre de la marca para el logo
     const brandFirstLetter = brandSettings.brand_name?.charAt(0).toUpperCase() || 'F';
 
@@ -36,7 +36,7 @@ const AuthForm = () => {
             }
         }
     }, [isAuthenticated, user, navigate]);
-    
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
@@ -84,10 +84,10 @@ const AuthForm = () => {
                 <div className="text-center mb-10">
                     <div className="relative w-20 h-20 mx-auto mb-6">
                         {brandSettings.logo_url ? (
-                            <img 
-                                src={brandSettings.logo_url} 
+                            <img
+                                src={brandSettings.logo_url}
                                 alt={brandSettings.brand_name}
-                                className="w-20 h-20 rounded-3xl object-cover shadow-xl shadow-[#D45A0F]/20 dark:shadow-blue-600/20"
+                                className="w-20 h-20 rounded-3xl object-cover shadow-xl shadow-blue-500/20 dark:shadow-blue-600/20"
                                 onError={(e) => {
                                     // Si la imagen falla al cargar, ocultar y mostrar el fallback
                                     e.target.style.display = 'none';
@@ -96,8 +96,8 @@ const AuthForm = () => {
                                 }}
                             />
                         ) : null}
-                        <div 
-                            className={`logo-fallback w-20 h-20 bg-gradient-to-br from-[#D45A0F] to-[#86c4c2] dark:from-blue-600 dark:to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-[#D45A0F]/20 dark:shadow-blue-600/20 ${brandSettings.logo_url ? 'hidden absolute inset-0' : ''}`}
+                        <div
+                            className={`logo-fallback w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 dark:from-blue-600 dark:to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-blue-500/20 dark:shadow-blue-600/20 ${brandSettings.logo_url ? 'hidden absolute inset-0' : ''}`}
                         >
                             <span className="text-white font-bold text-3xl">{brandFirstLetter}</span>
                         </div>
@@ -135,7 +135,7 @@ const AuthForm = () => {
                             placeholder="tu@email.com"
                             required
                         />
-                        
+
                         <ValidatedInput
                             label="Contraseña"
                             type="password"
@@ -170,10 +170,10 @@ const AuthForm = () => {
                                 {error}
                             </div>
                         )}
-                        
-                        <button 
-                            type="submit" 
-                            className="w-full py-3.5 bg-blue-600 dark:bg-blue-500 text-white rounded-2xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+
+                        <button
+                            type="submit"
+                            className="w-full py-3.5 bg-brand dark:bg-blue-500 text-white rounded-2xl font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             disabled={loading}
                         >
                             {loading ? (

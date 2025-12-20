@@ -35,6 +35,7 @@ const WelcomePage = () => {
     const [showRestoreBanner, setShowRestoreBanner] = useState(false);
     const [stats, setStats] = useState(null);
     const [showTour, setShowTour] = useState(false);
+    const hasRestoredRef = useRef(false);
 
     // Cargar estadísticas para social proof
     useEffect(() => {
@@ -58,13 +59,17 @@ const WelcomePage = () => {
 
     // Restaurar progreso guardado al montar
     useEffect(() => {
-        if (!progressLoading && hasSavedProgress()) {
+        if (!progressLoading && !hasRestoredRef.current && hasSavedProgress()) {
             const restored = restoreProgress();
             if (restored) {
                 setCurrentStep(restored.step);
                 setFormData(restored.formData);
                 setShowRestoreBanner(true);
+                hasRestoredRef.current = true;
             }
+        } else if (!progressLoading) {
+            // Si ya cargó y no hay nada que restaurar o ya se restauró, marcar como listo
+            hasRestoredRef.current = true;
         }
     }, [progressLoading, hasSavedProgress, restoreProgress]);
 
@@ -74,7 +79,7 @@ const WelcomePage = () => {
             const hasSeenTour = localStorage.getItem('onboarding_tour_completed');
             const completedTours = JSON.parse(localStorage.getItem('completed_tours') || '[]');
             const hasCompletedTour = completedTours.includes('onboarding_welcome');
-            
+
             if (!hasSeenTour && !hasCompletedTour) {
                 // Usar un pequeño delay para asegurar que el DOM esté listo
                 const timer = setTimeout(() => {
@@ -82,7 +87,7 @@ const WelcomePage = () => {
                     const stillHasSeenTour = localStorage.getItem('onboarding_tour_completed');
                     const stillCompletedTours = JSON.parse(localStorage.getItem('completed_tours') || '[]');
                     const stillHasCompletedTour = stillCompletedTours.includes('onboarding_welcome');
-                    
+
                     if (!stillHasSeenTour && !stillHasCompletedTour) {
                         setShowTour(true);
                     }
@@ -151,10 +156,10 @@ const WelcomePage = () => {
                 daily_calorie_goal: formData.daily_calorie_goal ? parseFloat(formData.daily_calorie_goal) : null,
                 activity_level: formData.activity_level,
             });
-            
+
             // Recargar el usuario para obtener el estado actualizado de onboarding
             await loadUser();
-            
+
             // Guardar recomendaciones si vienen en la respuesta
             if (response.data.recommendations) {
                 setRecommendations(response.data.recommendations);
@@ -244,7 +249,7 @@ const WelcomePage = () => {
                         </div>
                     </div>
                 )}
-                
+
                 {/* Progress Bar */}
                 <div className="mb-8">
                     <div className="flex justify-between items-center mb-2">
@@ -256,7 +261,7 @@ const WelcomePage = () => {
                         </span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div 
+                        <div
                             className="bg-blue-600 dark:bg-blue-500 rounded-full h-2 transition-all duration-300"
                             style={{ width: `${(currentStep / (recommendations ? 5 : 4)) * 100}%` }}
                         ></div>
@@ -265,14 +270,14 @@ const WelcomePage = () => {
 
                 {/* Step 1: Bienvenida Mejorada */}
                 {currentStep === 1 && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                         className="text-center space-y-6"
                     >
                         {/* Animación de bienvenida */}
-                        <motion.div 
+                        <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
@@ -287,8 +292,8 @@ const WelcomePage = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                             </svg>
                         </motion.div>
-                        
-                        <motion.h1 
+
+                        <motion.h1
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
@@ -296,8 +301,8 @@ const WelcomePage = () => {
                         >
                             ¡Bienvenido a {brandSettings.brand_name}!
                         </motion.h1>
-                        
-                        <motion.p 
+
+                        <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.4 }}
@@ -305,10 +310,10 @@ const WelcomePage = () => {
                         >
                             Estamos emocionados de acompañarte en tu viaje hacia una vida más saludable.
                         </motion.p>
-                        
+
                         {/* Social Proof */}
                         {stats && (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.5 }}
@@ -317,16 +322,16 @@ const WelcomePage = () => {
                                 <div className="grid grid-cols-2 gap-4 text-center">
                                     <div>
                                         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                            {stats.totalUsers > 1000 
-                                                ? `${(stats.totalUsers / 1000).toFixed(1)}K+` 
+                                            {stats.totalUsers > 1000
+                                                ? `${(stats.totalUsers / 1000).toFixed(1)}K+`
                                                 : stats.totalUsers}
                                         </div>
                                         <div className="text-xs text-gray-600 dark:text-gray-400">Usuarios</div>
                                     </div>
                                     <div>
                                         <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">
-                                            {stats.usersAchievingGoals > 1000 
-                                                ? `${(stats.usersAchievingGoals / 1000).toFixed(1)}K+` 
+                                            {stats.usersAchievingGoals > 1000
+                                                ? `${(stats.usersAchievingGoals / 1000).toFixed(1)}K+`
                                                 : stats.usersAchievingGoals}
                                         </div>
                                         <div className="text-xs text-gray-600 dark:text-gray-400">Alcanzando objetivos</div>
@@ -337,8 +342,8 @@ const WelcomePage = () => {
                                 </p>
                             </motion.div>
                         )}
-                        
-                        <motion.p 
+
+                        <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.6 }}
@@ -348,7 +353,7 @@ const WelcomePage = () => {
                         </motion.p>
 
                         {/* Beneficios rápidos */}
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.7 }}
@@ -429,11 +434,10 @@ const WelcomePage = () => {
                                             key={option.value}
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, gender: option.value }))}
-                                            className={`p-4 rounded-2xl border-2 transition-all ${
-                                                formData.gender === option.value
+                                            className={`p-4 rounded-2xl border-2 transition-all ${formData.gender === option.value
                                                     ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
                                                     : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-400 dark:hover:border-blue-600'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="text-3xl mb-2">{option.icon}</div>
                                             <div className="text-sm font-medium text-gray-900 dark:text-white">{option.label}</div>
@@ -546,11 +550,10 @@ const WelcomePage = () => {
                                             key={goal.value}
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, goal_type: goal.value }))}
-                                            className={`p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${
-                                                formData.goal_type === goal.value
+                                            className={`p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${formData.goal_type === goal.value
                                                     ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
                                                     : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-400 dark:hover:border-blue-600'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex-shrink-0">
                                                 <Icon name={goal.iconName} className="w-6 h-6 text-gray-700 dark:text-gray-300" />
@@ -597,14 +600,14 @@ const WelcomePage = () => {
 
                 {/* Step 5: Recommendations con celebración */}
                 {currentStep === 5 && recommendations && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5 }}
                         className="space-y-6"
                     >
                         {/* Celebración */}
-                        <motion.div 
+                        <motion.div
                             initial={{ scale: 0, rotate: -180 }}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
@@ -615,7 +618,7 @@ const WelcomePage = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <motion.h2 
+                            <motion.h2
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.3 }}
@@ -623,7 +626,7 @@ const WelcomePage = () => {
                             >
                                 ¡Configuración Completada! 🎉
                             </motion.h2>
-                            <motion.p 
+                            <motion.p
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.4 }}
@@ -640,7 +643,7 @@ const WelcomePage = () => {
                                 ¡Ya estás listo para comenzar tu viaje!
                             </motion.div>
                         </motion.div>
-                        
+
                         <div className="space-y-4">
                             {/* Current stats */}
                             <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-6">

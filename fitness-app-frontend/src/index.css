@@ -42,7 +42,7 @@
   .safe-area-bottom {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
-  
+
   .pb-safe {
     padding-bottom: max(0px, env(safe-area-inset-bottom));
   }
@@ -53,28 +53,35 @@
    ======================================== */
 :root {
   /* Modo Claro - Paleta Personalizada con contraste WCAG AAA */
-  --color-text: #0a0a0a; /* Mejorado para cumplir WCAG AAA */
+  --color-text: #0a0a0a;
   --color-background: #FAF3E1;
-  --color-primary: #D45A0F; /* Ratio ~4.5:1 con fondo claro - cumple AA */
+  --color-primary: #3b82f6;
+  /* Blue-500 for better visibility on beige */
   --color-secondary: #F5E7C6;
-  --color-accent: #86c4c2;
+  --color-accent: #8b5cf6;
+  /* Purple-500 */
   --color-surface: #FFFFFF;
   --color-border: #E5D9C8;
-  --color-text-secondary: #1a1a1a; /* Mejorado para cumplir WCAG AAA */
-  --color-text-muted: #4a4a4a; /* Mejorado para cumplir WCAG AA */
+  --color-text-secondary: #1a1a1a;
+  --color-text-muted: #4a4a4a;
 }
 
 .dark {
   /* Modo Oscuro - Contraste WCAG AAA */
-  --color-text: #f9fafb; /* Ratio ~15:1 con fondo negro - cumple AAA */
+  --color-text: #f9fafb;
+  /* Ratio ~15:1 con fondo negro - cumple AAA */
   --color-background: #000000;
-  --color-primary: #60a5fa; /* Mejorado para mejor contraste en modo oscuro */
+  --color-primary: #60a5fa;
+  /* Mejorado para mejor contraste en modo oscuro */
   --color-secondary: #111827;
-  --color-accent: #34d399; /* Mejorado para mejor contraste */
+  --color-accent: #34d399;
+  /* Mejorado para mejor contraste */
   --color-surface: #111827;
   --color-border: #374151;
-  --color-text-secondary: #e5e7eb; /* Ratio ~12:1 - cumple AAA */
-  --color-text-muted: #9ca3af; /* Ratio ~7:1 - cumple AAA */
+  --color-text-secondary: #e5e7eb;
+  /* Ratio ~12:1 - cumple AAA */
+  --color-text-muted: #9ca3af;
+  /* Ratio ~7:1 - cumple AAA */
 }
 
 /* ========================================
@@ -152,48 +159,56 @@ html:not(.dark) [class*="text-white"] {
 /* Texto Principal - Casi negro para máximo contraste */
 html:not(.dark) .text-gray-900,
 html:not(.dark) [class*="text-gray-900"] {
-  color: #0a0a0a !important; /* Casi negro puro - Ratio ~10:1 */
+  color: #0a0a0a !important;
+  /* Casi negro puro - Ratio ~10:1 */
 }
 
 /* Texto Secundario - Gris muy oscuro, casi negro */
 html:not(.dark) .text-gray-800,
 html:not(.dark) [class*="text-gray-800"] {
-  color: #1a1a1a !important; /* Casi negro - Ratio ~9.8:1 */
+  color: #1a1a1a !important;
+  /* Casi negro - Ratio ~9.8:1 */
 }
 
 /* Texto Secundario Alternativo - Gris muy oscuro */
 html:not(.dark) .text-gray-700,
 html:not(.dark) [class*="text-gray-700"] {
-  color: #222222 !important; /* Gris muy oscuro - Ratio ~8.2:1 */
+  color: #222222 !important;
+  /* Gris muy oscuro - Ratio ~8.2:1 */
 }
 
 /* Texto Secundario - Mapear gray-600 a gris muy oscuro */
 html:not(.dark) .text-gray-600,
 html:not(.dark) [class*="text-gray-600"] {
-  color: #1f1f1f !important; /* Gris muy oscuro, casi negro - Ratio ~9.5:1 */
+  color: #1f1f1f !important;
+  /* Gris muy oscuro, casi negro - Ratio ~9.5:1 */
 }
 
 /* Texto Terciario - Mapear gray-500 a gris oscuro */
 html:not(.dark) .text-gray-500,
 html:not(.dark) [class*="text-gray-500"] {
-  color: #2a2a2a !important; /* Gris oscuro - Ratio ~7.5:1 */
+  color: #2a2a2a !important;
+  /* Gris oscuro - Ratio ~7.5:1 */
 }
 
 /* Texto Muy Claro - Mapear gray-400 a gris oscuro */
 html:not(.dark) .text-gray-400,
 html:not(.dark) [class*="text-gray-400"] {
-  color: #2d2d2d !important; /* Gris oscuro - Ratio ~7.2:1 */
+  color: #2d2d2d !important;
+  /* Gris oscuro - Ratio ~7.2:1 */
 }
 
 html:not(.dark) .text-gray-300,
 html:not(.dark) [class*="text-gray-300"] {
-  color: #3a3a3a !important; /* Gris medio-oscuro - Ratio ~6.0:1 */
+  color: #3a3a3a !important;
+  /* Gris medio-oscuro - Ratio ~6.0:1 */
 }
 
 /* Placeholders con mejor contraste */
 html:not(.dark) [class*="placeholder:text-gray"],
 html:not(.dark) ::placeholder {
-  color: #888888 !important; /* Mejor contraste para placeholders */
+  color: #888888 !important;
+  /* Mejor contraste para placeholders */
 }
 
 /* Fondos con colores de la paleta */
@@ -229,45 +244,31 @@ html:not(.dark) [class*="border-gray-300"] {
 }
 
 /* Colores primarios - Usar la paleta personalizada */
-html:not(.dark) .bg-blue-600,
-html:not(.dark) [class*="bg-blue-600"],
-html:not(.dark) .bg-blue-500,
-html:not(.dark) [class*="bg-blue-500"],
-html:not(.dark) .bg-blue-400,
-html:not(.dark) [class*="bg-blue-400"],
-html:not(.dark) .bg-blue-700,
-html:not(.dark) [class*="bg-blue-700"] {
+html:not(.dark) .bg-brand,
+html:not(.dark) [class*="bg-brand"] {
   background-color: var(--color-primary) !important;
 }
 
-html:not(.dark) .text-blue-600,
-html:not(.dark) [class*="text-blue-600"],
-html:not(.dark) .text-blue-500,
-html:not(.dark) [class*="text-blue-500"],
-html:not(.dark) .text-blue-400,
-html:not(.dark) [class*="text-blue-400"] {
+html:not(.dark) .text-brand,
+html:not(.dark) [class*="text-brand"] {
   color: var(--color-primary) !important;
 }
 
-html:not(.dark) .border-blue-600,
-html:not(.dark) [class*="border-blue-600"],
-html:not(.dark) .border-blue-500,
-html:not(.dark) [class*="border-blue-500"],
-html:not(.dark) .border-blue-400,
-html:not(.dark) [class*="border-blue-400"] {
+html:not(.dark) .border-brand,
+html:not(.dark) [class*="border-brand"] {
   border-color: var(--color-primary) !important;
 }
 
 /* Focus rings con color primary */
-html:not(.dark) [class*="focus:ring-blue"],
-html:not(.dark) [class*="focus:border-blue"] {
+html:not(.dark) [class*="focus:ring-brand"],
+html:not(.dark) [class*="focus:border-brand"] {
   --tw-ring-color: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
 }
 
 /* Hover states con color primary */
-html:not(.dark) .hover\:bg-blue-700,
-html:not(.dark) [class*="hover:bg-blue-700"] {
+html:not(.dark) .hover\:bg-brand-hover,
+html:not(.dark) [class*="hover:bg-brand-hover"] {
   background-color: var(--color-primary) !important;
   opacity: 0.9;
 }
@@ -275,7 +276,12 @@ html:not(.dark) [class*="hover:bg-blue-700"] {
 /* ========================================
    TIPOGRAFÍA
    ======================================== */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: 'Poppins', 'Inter', system-ui, sans-serif;
   font-weight: 600;
   line-height: 1.2;
@@ -308,11 +314,11 @@ p {
 }
 
 /* Mejora de espaciado consistente */
-.space-y-consistent > * + * {
+.space-y-consistent>*+* {
   margin-top: 1rem;
 }
 
-.space-y-consistent-lg > * + * {
+.space-y-consistent-lg>*+* {
   margin-top: 1.5rem;
 }
 
@@ -375,6 +381,7 @@ p {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

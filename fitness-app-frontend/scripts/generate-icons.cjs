@@ -31,13 +31,13 @@ if (!fs.existsSync(iconsDir)) {
 function createIconSVG(size, isMaskable = false) {
     const padding = isMaskable ? size * 0.1 : 0;
     const contentSize = size - padding * 2;
-    
+
     return `
 <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#D45A0F;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#FF6D1F;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
     </linearGradient>
   </defs>
   <rect width="${size}" height="${size}" fill="url(#grad)" rx="${isMaskable ? size * 0.2 : 0}"/>
@@ -52,7 +52,7 @@ async function generateIcons() {
     for (const size of sizes) {
         const svg = createIconSVG(size, false);
         const outputPath = path.join(iconsDir, `icon-${size}x${size}.png`);
-        
+
         try {
             await sharp(Buffer.from(svg))
                 .resize(size, size)
@@ -68,7 +68,7 @@ async function generateIcons() {
     for (const size of maskableSizes) {
         const svg = createIconSVG(size, true);
         const outputPath = path.join(iconsDir, `icon-maskable-${size}x${size}.png`);
-        
+
         try {
             await sharp(Buffer.from(svg))
                 .resize(size, size)

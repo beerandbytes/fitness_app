@@ -4,9 +4,13 @@
   "description": "Aplicación completa de seguimiento de fitness, nutrición y entrenamiento. Registra tus ejercicios, comidas, peso y alcanza tus objetivos de salud.",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#FAF3E1",
-  "theme_color": "#D45A0F",
+  "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "es",
@@ -73,7 +77,12 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["health", "fitness", "lifestyle", "medical"],
+  "categories": [
+    "health",
+    "fitness",
+    "lifestyle",
+    "medical"
+  ],
   "screenshots": [
     {
       "src": "/screenshots/dashboard.png",
@@ -168,7 +177,10 @@
       "files": [
         {
           "name": "media",
-          "accept": ["image/*", "video/*"]
+          "accept": [
+            "image/*",
+            "video/*"
+          ]
         }
       ]
     }
@@ -181,4 +193,3 @@
     "preferred_width": 400
   }
 }
-

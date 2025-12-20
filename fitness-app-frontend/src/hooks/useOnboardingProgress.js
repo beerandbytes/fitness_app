@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const ONBOARDING_STORAGE_KEY = 'onboarding_progress';
 
@@ -19,7 +19,7 @@ export const useOnboardingProgress = () => {
         // Verificar que el progreso no sea muy antiguo (más de 7 días)
         const savedAt = new Date(parsed.savedAt);
         const daysDiff = (new Date() - savedAt) / (1000 * 60 * 60 * 24);
-        
+
         if (daysDiff < 7) {
           setProgress(parsed);
         } else {
@@ -35,7 +35,7 @@ export const useOnboardingProgress = () => {
   }, []);
 
   // Guardar progreso
-  const saveProgress = (step, formData) => {
+  const saveProgress = useCallback((step, formData) => {
     const progressData = {
       step,
       formData,
@@ -47,25 +47,25 @@ export const useOnboardingProgress = () => {
     } catch (e) {
       console.error('Error al guardar progreso de onboarding:', e);
     }
-  };
+  }, []);
 
   // Limpiar progreso (cuando se completa)
-  const clearProgress = () => {
+  const clearProgress = useCallback(() => {
     try {
       localStorage.removeItem(ONBOARDING_STORAGE_KEY);
       setProgress(null);
     } catch (e) {
       console.error('Error al limpiar progreso de onboarding:', e);
     }
-  };
+  }, []);
 
   // Verificar si hay progreso guardado
-  const hasSavedProgress = () => {
+  const hasSavedProgress = useCallback(() => {
     return progress !== null;
-  };
+  }, [progress]);
 
   // Restaurar progreso guardado
-  const restoreProgress = () => {
+  const restoreProgress = useCallback(() => {
     if (progress) {
       return {
         step: progress.step,
@@ -73,7 +73,7 @@ export const useOnboardingProgress = () => {
       };
     }
     return null;
-  };
+  }, [progress]);
 
   return {
     progress,
