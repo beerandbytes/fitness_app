@@ -4,10 +4,12 @@ echo "🚀 Iniciando aplicación..."
 
 # Ejecutar migraciones (no bloquea si fallan)
 echo "📦 Ejecutando migraciones de base de datos..."
-npm run db:migrate 2>&1 || {
-    echo "⚠️  Advertencia: Las migraciones fallaron. Intentando parche manual..."
-    node scripts/fix_exercises_schema.js 2>&1 || echo "❌ El parche manual también falló."
-}
+npm run db:migrate 2>&1 || echo "⚠️  Advertencia: Las migraciones reportaron error (continuando)..."
+
+# SIEMPRE ejecutar el parche manual para asegurar que las columnas existan
+# Esto corrige el caso donde la migración se detiene parcialmente (éxito falso) pero no crea las columnas
+echo "🛠️ Asegurando esquema (parche manual)..."
+node scripts/fix_exercises_schema.js 2>&1 || echo "❌ El parche manual falló (no crítico si ya existe)."
 
 
 # ESPERAR a que los cambios de esquema se propaguen
