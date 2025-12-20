@@ -227,6 +227,15 @@ const WelcomePage = () => {
         clearProgress();
     };
 
+    // Definir los pasos del tour al nivel superior para evitar error de hooks condicionales
+    const tourSteps = useMemo(() => [
+        {
+            target: '.welcome-hero-icon',
+            title: '¡Bienvenido!',
+            content: 'Completa estos sencillos pasos para configurar tu perfil y empezar tu viaje hacia una vida más saludable.',
+        },
+    ], []);
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#fafafa] via-white to-[#f5f5f5] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4 transition-colors duration-300">
             <div className="max-w-2xl w-full bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 p-8 md:p-12">
@@ -385,13 +394,7 @@ const WelcomePage = () => {
                 {/* Tour Interactivo */}
                 {showTour && currentStep === 1 && (
                     <EnhancedInteractiveTour
-                        steps={useMemo(() => [
-                            {
-                                target: '.welcome-hero-icon',
-                                title: '¡Bienvenido!',
-                                content: 'Completa estos sencillos pasos para configurar tu perfil y empezar tu viaje hacia una vida más saludable.',
-                            },
-                        ], [])}
+                        steps={tourSteps}
                         tourId="onboarding_welcome"
                         onComplete={() => {
                             setShowTour(false);
