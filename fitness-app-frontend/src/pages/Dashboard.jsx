@@ -17,6 +17,7 @@ import Icon from '../components/Icons';
 import { format, subDays, subWeeks } from 'date-fns';
 import api from '../services/api';
 import logger from '../utils/logger';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { motion } from 'framer-motion';
 
 // Lazy load de componentes pesados
@@ -77,27 +78,8 @@ const Dashboard = () => {
         }
     }, []);
 
-    // Fetch comparaciones semanales y mensuales
-    // Usar valores primitivos en lugar de objetos completos para evitar bucles infinitos
-    // Usar useRef para acceder a los valores más recientes de log y goal
-    const logRef = useRef(log);
-    const goalRef = useRef(goal);
-
-    // Actualizar refs cuando cambien los objetos
-    useEffect(() => {
-        logRef.current = log;
-    }, [log]);
-
-    useEffect(() => {
-        goalRef.current = goal;
-    }, [goal]);
-
     const fetchComparisons = useCallback(async () => {
-        // Usar los valores más recientes desde los refs
-        const currentLog = logRef.current;
-        const currentGoal = goalRef.current;
-
-        if (!currentLog || !currentGoal) {
+        if (!log || !goal) {
             return;
         }
 
@@ -110,9 +92,9 @@ const Dashboard = () => {
                 const weekAgoResponse = await api.get(`/logs/${weekAgo}`);
                 const weekAgoLog = weekAgoResponse.data.log;
 
-                if (weekAgoLog && currentLog) {
-                    const weightDiff = parseFloat(currentLog.weight) - parseFloat(weekAgoLog.weight);
-                    const caloriesDiff = parseFloat(currentLog.consumed_calories) - parseFloat(weekAgoLog.consumed_calories);
+                if (weekAgoLog && log) {
+                    const weightDiff = parseFloat(log.weight) - parseFloat(weekAgoLog.weight);
+                    const caloriesDiff = parseFloat(log.consumed_calories) - parseFloat(weekAgoLog.consumed_calories);
 
                     setWeeklyComparison({
                         weightDiff,
@@ -129,17 +111,17 @@ const Dashboard = () => {
                 const monthAgoResponse = await api.get(`/logs/${monthAgo}`);
                 const monthAgoLog = monthAgoResponse.data.log;
 
-                if (monthAgoLog && currentLog && currentGoal) {
-                    const currentWeight = parseFloat(currentLog.weight);
+                if (monthAgoLog && log && goal) {
+                    const currentWeight = parseFloat(log.weight);
                     const monthAgoWeight = parseFloat(monthAgoLog.weight);
-                    const targetWeight = parseFloat(currentGoal.target_weight);
-                    const startWeight = parseFloat(currentGoal.current_weight);
+                    const targetWeight = parseFloat(goal.target_weight);
+                    const startWeight = parseFloat(goal.current_weight);
 
-                    const totalProgress = currentGoal.goal_type === 'weight_loss'
+                    const totalProgress = goal.goal_type === 'weight_loss'
                         ? (startWeight - currentWeight) / (startWeight - targetWeight) * 100
                         : (currentWeight - startWeight) / (targetWeight - startWeight) * 100;
 
-                    const monthlyProgressValue = currentGoal.goal_type === 'weight_loss'
+                    const monthlyProgressValue = goal.goal_type === 'weight_loss'
                         ? startWeight - currentWeight
                         : currentWeight - startWeight;
 
@@ -368,9 +350,11 @@ const Dashboard = () => {
 
                             {/* Sección 2: Evolución de Peso */}
                             <div className="mb-6">
-                                <Suspense fallback={<WeightChartSkeleton />}>
-                                    <WeightLineChart macros={totalMacros} />
-                                </Suspense>
+                                <ErrorBoundary>
+                                    <Suspense fallback={<WeightChartSkeleton />}>
+                                        <WeightLineChart macros={totalMacros} />
+                                    </Suspense>
+                                </ErrorBoundary>
                             </div>
 
                             {/* Sección 2.5: Macros y Estadísticas Semanales */}

@@ -8,17 +8,18 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import api from '../services/api';
 import logger from '../utils/logger';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // Lazy load de componentes pesados
 const FoodSearchAndAdd = lazy(() => import('../components/FoodSearchAndAdd'));
 
 // Skeleton para FoodSearchAndAdd
 const FoodSearchSkeleton = () => (
-  <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm animate-pulse">
-    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
-    <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
-    <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-  </div>
+    <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm animate-pulse">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+        <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+        <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    </div>
 );
 
 const DietPage = () => {
@@ -27,7 +28,7 @@ const DietPage = () => {
     const [mealItems, setMealItems] = useState([]);
     const [goal, setGoal] = useState(null);
     const [loading, setLoading] = useState(true);
-    
+
     // Memoizar formattedDate para evitar recreación en cada render
     const formattedDate = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
 
@@ -86,7 +87,7 @@ const DietPage = () => {
         if (!item || !item.food) return acc;
         const quantity = parseFloat(item.quantity_grams) || 0;
         const food = item.food;
-        
+
         acc.protein += (parseFloat(food.protein_g || 0) / 100) * quantity;
         acc.carbs += (parseFloat(food.carbs_g || 0) / 100) * quantity;
         acc.fat += (parseFloat(food.fat_g || 0) / 100) * quantity;
@@ -95,8 +96,8 @@ const DietPage = () => {
 
     const caloriesConsumed = log ? parseFloat(log.consumed_calories) : 0;
     // Usar el objetivo del usuario si existe, de lo contrario usar un valor por defecto
-    const calorieGoal = goal && goal.daily_calorie_goal 
-        ? parseFloat(goal.daily_calorie_goal) 
+    const calorieGoal = goal && goal.daily_calorie_goal
+        ? parseFloat(goal.daily_calorie_goal)
         : 2000; // Valor por defecto si no hay objetivo
 
     // Memoizar formattedDateLabel para evitar recreación en cada render
@@ -143,71 +144,73 @@ const DietPage = () => {
 
                 {/* Búsqueda y Añadir Comida - SIEMPRE VISIBLE */}
                 <div className="mb-6">
-                    <Suspense fallback={<FoodSearchSkeleton />}>
-                        <FoodSearchAndAdd 
-                            log={log} 
-                            onLogUpdated={handleLogUpdated}
-                            date={formattedDate}
-                        />
-                    </Suspense>
+                    <ErrorBoundary>
+                        <Suspense fallback={<FoodSearchSkeleton />}>
+                            <FoodSearchAndAdd
+                                log={log}
+                                onLogUpdated={handleLogUpdated}
+                                date={formattedDate}
+                            />
+                        </Suspense>
+                    </ErrorBoundary>
                 </div>
 
                 {loading ? (
                     <DietPageSkeleton />
                 ) : (
                     <div className="space-y-6">
-                            {/* Gráfica Radial de Calorías */}
-                            <div className="backdrop-blur-xl bg-white/60 dark:bg-black/60 rounded-3xl border border-gray-200/50 dark:border-gray-800/50 p-8 shadow-sm hover:shadow-lg hover:border-gray-300/50 dark:hover:border-gray-700/50 transition-all duration-500">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-2xl font-light tracking-tight text-gray-900 dark:text-white">
-                                        Calorías Consumidas
-                                    </h2>
-                                    {goal && goal.daily_calorie_goal && (
-                                        <span className="text-xs px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium">
-                                            Objetivo: {parseFloat(goal.daily_calorie_goal).toFixed(0)} kcal
-                                        </span>
-                                    )}
-                                </div>
-                                <CalorieRadialChart 
-                                    consumed={caloriesConsumed} 
-                                    goal={calorieGoal}
-                                />
-                                {!goal && (
-                                    <div className="mt-4 p-4 backdrop-blur-md bg-yellow-50/60 dark:bg-yellow-900/20 border border-yellow-200/50 dark:border-yellow-800/50 rounded-2xl">
-                                        <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                                            💡 Establece un objetivo de peso para obtener recomendaciones personalizadas de calorías
-                                        </p>
-                                    </div>
+                        {/* Gráfica Radial de Calorías */}
+                        <div className="backdrop-blur-xl bg-white/60 dark:bg-black/60 rounded-3xl border border-gray-200/50 dark:border-gray-800/50 p-8 shadow-sm hover:shadow-lg hover:border-gray-300/50 dark:hover:border-gray-700/50 transition-all duration-500">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-2xl font-light tracking-tight text-gray-900 dark:text-white">
+                                    Calorías Consumidas
+                                </h2>
+                                {goal && goal.daily_calorie_goal && (
+                                    <span className="text-xs px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium">
+                                        Objetivo: {parseFloat(goal.daily_calorie_goal).toFixed(0)} kcal
+                                    </span>
                                 )}
-                                
-                                {/* Macros Resumen */}
-                                <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200/50 dark:border-gray-800/50">
-                                    <div className="text-center">
-                                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Proteína</div>
-                                        <div className="text-xl font-semibold text-gray-900 dark:text-white">{totalMacros.protein.toFixed(0)}g</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Carbohidratos</div>
-                                        <div className="text-xl font-semibold text-gray-900 dark:text-white">{totalMacros.carbs.toFixed(0)}g</div>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Grasa</div>
-                                        <div className="text-xl font-semibold text-gray-900 dark:text-white">{totalMacros.fat.toFixed(0)}g</div>
-                                    </div>
+                            </div>
+                            <CalorieRadialChart
+                                consumed={caloriesConsumed}
+                                goal={calorieGoal}
+                            />
+                            {!goal && (
+                                <div className="mt-4 p-4 backdrop-blur-md bg-yellow-50/60 dark:bg-yellow-900/20 border border-yellow-200/50 dark:border-yellow-800/50 rounded-2xl">
+                                    <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                                        💡 Establece un objetivo de peso para obtener recomendaciones personalizadas de calorías
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Macros Resumen */}
+                            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200/50 dark:border-gray-800/50">
+                                <div className="text-center">
+                                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Proteína</div>
+                                    <div className="text-xl font-semibold text-gray-900 dark:text-white">{totalMacros.protein.toFixed(0)}g</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Carbohidratos</div>
+                                    <div className="text-xl font-semibold text-gray-900 dark:text-white">{totalMacros.carbs.toFixed(0)}g</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Grasa</div>
+                                    <div className="text-xl font-semibold text-gray-900 dark:text-white">{totalMacros.fat.toFixed(0)}g</div>
                                 </div>
                             </div>
+                        </div>
 
                         {/* Lista de Comidas */}
                         <div className="backdrop-blur-xl bg-white/60 dark:bg-black/60 rounded-3xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500">
-                                <div className="p-6 border-b border-gray-200/50 dark:border-gray-800/50">
-                                    <h2 className="text-2xl font-light tracking-tight text-gray-900 dark:text-white">
-                                        Comidas Registradas
-                                    </h2>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                        {mealItems.length} {mealItems.length === 1 ? 'comida registrada' : 'comidas registradas'}
-                                    </p>
-                                </div>
-                                
+                            <div className="p-6 border-b border-gray-200/50 dark:border-gray-800/50">
+                                <h2 className="text-2xl font-light tracking-tight text-gray-900 dark:text-white">
+                                    Comidas Registradas
+                                </h2>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    {mealItems.length} {mealItems.length === 1 ? 'comida registrada' : 'comidas registradas'}
+                                </p>
+                            </div>
+
                             {mealItems.length === 0 ? (
                                 <EmptyState
                                     icon={
@@ -227,8 +230,8 @@ const DietPage = () => {
                             ) : (
                                 <div className="divide-y divide-gray-200/50 dark:divide-gray-800/50">
                                     {mealItems.map((item) => (
-                                        <div 
-                                            key={item.meal_item_id} 
+                                        <div
+                                            key={item.meal_item_id}
                                             className="p-6 hover:backdrop-blur-md hover:bg-white/40 dark:hover:bg-black/40 transition-all duration-300"
                                         >
                                             <div className="flex items-center justify-between">

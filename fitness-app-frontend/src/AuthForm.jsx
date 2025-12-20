@@ -20,20 +20,24 @@ const AuthForm = () => {
     // Obtener la primera letra del nombre de la marca para el logo
     const brandFirstLetter = brandSettings.brand_name?.charAt(0).toUpperCase() || 'F';
 
+    const handleNavigation = (currentUser) => {
+        if (!currentUser) return;
+
+        if (!currentUser.role || currentUser.role === null) {
+            navigate('/select-role', { replace: true });
+        } else if (currentUser.role === 'ADMIN') {
+            navigate('/admin', { replace: true });
+        } else if (currentUser.role === 'COACH') {
+            navigate('/coach/dashboard', { replace: true });
+        } else {
+            navigate('/dashboard', { replace: true });
+        }
+    };
+
     useEffect(() => {
         if (isAuthenticated && user) {
-            // Si el usuario ya está autenticado y tiene un rol, redirigir según el rol
-            // Esto evita que usuarios autenticados vean la página de login/registro
-            if (!user.role || user.role === null) {
-                navigate('/select-role', { replace: true });
-            } else if (user.role === 'ADMIN') {
-                navigate('/admin', { replace: true });
-            } else if (user.role === 'COACH') {
-                navigate('/coach/dashboard', { replace: true });
-            } else {
-                // El OnboardingGuard se encargará de verificar si necesita onboarding
-                navigate('/dashboard', { replace: true });
-            }
+            // Solo redirigir si el usuario ya está autenticado al cargar (no durante el flujo de submit)
+            handleNavigation(user);
         }
     }, [isAuthenticated, user, navigate]);
 
@@ -55,10 +59,11 @@ const AuthForm = () => {
                     setLoading(false);
                     return;
                 }
+                // Si el store no redirige automáticamente, lo hacemos nosotros
+                if (result.user) handleNavigation(result.user);
             } else {
                 const result = await register(email, password, null, navigate);
                 if (!result.success) {
-                    // Manejar errores de validación con detalles
                     const errorMsg = result.error || 'Error al registrarse';
                     const details = result.details;
                     if (details && Array.isArray(details) && details.length > 0) {
@@ -69,6 +74,8 @@ const AuthForm = () => {
                     setLoading(false);
                     return;
                 }
+                // Redirigir explícitamente después de registrarse satisfactoriamente
+                if (result.user) handleNavigation(result.user);
             }
         } catch (err) {
             setError(err.error || 'Ocurrió un error al procesar la solicitud.');

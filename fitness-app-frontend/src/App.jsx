@@ -14,10 +14,10 @@ import LoadingState from './components/LoadingState';
 
 // Componente de carga mejorado
 const LoadingSpinner = () => (
-  <LoadingState 
-    message="Cargando..." 
-    variant="spinner" 
-    fullScreen 
+  <LoadingState
+    message="Cargando..."
+    variant="spinner"
+    fullScreen
   />
 );
 
@@ -214,296 +214,298 @@ function App() {
         <GlobalSearch open={globalSearchOpen} onOpenChange={setGlobalSearchOpen} />
         {apiLogViewerOpen && <ApiLogViewer onClose={() => setApiLogViewerOpen(false)} />}
         <ToastContainer />
-        <Suspense fallback={<LoadingSpinner />}>
-          <main id="main-content" role="main">
-          <Routes>
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingSpinner />}>
+            <main id="main-content" role="main">
+              <Routes>
 
-        {/* Ruta Base - Landing Page */}
-        <Route 
-          path="/" 
-          element={
-            isAuthenticated ? (
-              isAdmin ? (
-                <Navigate to="/admin" replace />
-              ) : isCoach ? (
-                <Navigate to="/coach/dashboard" replace />
-              ) : (
-                <Navigate to="/dashboard" replace />
-              )
-            ) : (
-              <LandingPage />
-            )
-          } 
-        />
+                {/* Ruta Base - Landing Page */}
+                <Route
+                  path="/"
+                  element={
+                    isAuthenticated ? (
+                      isAdmin ? (
+                        <Navigate to="/admin" replace />
+                      ) : isCoach ? (
+                        <Navigate to="/coach/dashboard" replace />
+                      ) : (
+                        <Navigate to="/dashboard" replace />
+                      )
+                    ) : (
+                      <LandingPage />
+                    )
+                  }
+                />
 
-        {/* Rutas Públicas de Login y Registro */}
-        <Route path="/login" element={<AuthForm />} />
-        <Route path="/register" element={<AuthForm />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/invite/:token" element={<InvitePage />} />
+                {/* Rutas Públicas de Login y Registro */}
+                <Route path="/login" element={<AuthForm />} />
+                <Route path="/register" element={<AuthForm />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/invite/:token" element={<InvitePage />} />
 
-        {/* Ruta de Selección de Rol (Protegida) */}
-        <Route
-          path="/select-role"
-          element={
-            <ProtectedRoute>
-              <RoleSelectionPage />
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Selección de Rol (Protegida) */}
+                <Route
+                  path="/select-role"
+                  element={
+                    <ProtectedRoute>
+                      <RoleSelectionPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Bienvenida/Onboarding (Protegida) */}
-        <Route
-          path="/welcome"
-          element={
-            <ProtectedRoute>
-              <OnboardingGuard>
-                <WelcomePage />
-              </OnboardingGuard>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Bienvenida/Onboarding (Protegida) */}
+                <Route
+                  path="/welcome"
+                  element={
+                    <ProtectedRoute>
+                      <OnboardingGuard>
+                        <WelcomePage />
+                      </OnboardingGuard>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta Dashboard (Protegida) - Redirige admins y coaches a sus dashboards */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <Dashboard />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta Dashboard (Protegida) - Redirige admins y coaches a sus dashboards */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <Dashboard />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Seguimiento de Peso (Protegida) */}
-        <Route
-          path="/weight"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <WeightTrackingPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Seguimiento de Peso (Protegida) */}
+                <Route
+                  path="/weight"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <WeightTrackingPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Dieta (Protegida) */}
-        <Route
-          path="/diet"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <DietPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Dieta (Protegida) */}
+                <Route
+                  path="/diet"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <DietPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Rutas de Rutinas (Protegidas) */}
-        <Route
-          path="/routines"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <RoutinesPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/routines/:id"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <RoutineDetailPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/routines/:routineId/workout"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <ActiveWorkoutPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Rutas de Rutinas (Protegidas) */}
+                <Route
+                  path="/routines"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <RoutinesPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/routines/:id"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <RoutineDetailPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/routines/:routineId/workout"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <ActiveWorkoutPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Registro Diario de Ejercicios (Protegida) */}
-        <Route
-          path="/daily-log"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <DailyLogPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Registro Diario de Ejercicios (Protegida) */}
+                <Route
+                  path="/daily-log"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <DailyLogPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Calendario (Protegida) */}
-        <Route
-          path="/calendar"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <CalendarPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Calendario (Protegida) */}
+                <Route
+                  path="/calendar"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <CalendarPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Ejercicios (Protegida) */}
-        <Route
-          path="/exercises"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <ExercisesPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Ejercicios (Protegida) */}
+                <Route
+                  path="/exercises"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <ExercisesPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Logros */}
-        <Route
-          path="/achievements"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <AchievementsPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Logros */}
+                <Route
+                  path="/achievements"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <AchievementsPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Check-in Semanal */}
-        <Route
-          path="/checkin"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <CheckInPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Check-in Semanal */}
+                <Route
+                  path="/checkin"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <CheckInPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Centro de Notificaciones */}
-        <Route
-          path="/notifications"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <NotificationsCenterPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Centro de Notificaciones */}
+                <Route
+                  path="/notifications"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <NotificationsCenterPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Progreso Avanzado */}
-        <Route
-          path="/progress"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <ProgressPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Progreso Avanzado */}
+                <Route
+                  path="/progress"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <ProgressPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Ruta de Mensajería */}
-        <Route
-          path="/messages"
-          element={
-            <ProtectedRoute>
-              <ClientRoute>
-                <OnboardingGuard>
-                  <MessagesPage />
-                </OnboardingGuard>
-              </ClientRoute>
-            </ProtectedRoute>
-          }
-        />
+                {/* Ruta de Mensajería */}
+                <Route
+                  path="/messages"
+                  element={
+                    <ProtectedRoute>
+                      <ClientRoute>
+                        <OnboardingGuard>
+                          <MessagesPage />
+                        </OnboardingGuard>
+                      </ClientRoute>
+                    </ProtectedRoute>
+                  }
+                />
 
-        {/* Rutas del Coach */}
-        <Route
-          path="/coach/dashboard"
-          element={
-            <CoachRoute>
-              <CoachDashboard />
-            </CoachRoute>
-          }
-        />
-        <Route
-          path="/coach/client/:id"
-          element={
-            <CoachRoute>
-              <CoachClientDetail />
-            </CoachRoute>
-          }
-        />
-        <Route
-          path="/coach/templates"
-          element={
-            <CoachRoute>
-              <TemplatesPage />
-            </CoachRoute>
-          }
-        />
+                {/* Rutas del Coach */}
+                <Route
+                  path="/coach/dashboard"
+                  element={
+                    <CoachRoute>
+                      <CoachDashboard />
+                    </CoachRoute>
+                  }
+                />
+                <Route
+                  path="/coach/client/:id"
+                  element={
+                    <CoachRoute>
+                      <CoachClientDetail />
+                    </CoachRoute>
+                  }
+                />
+                <Route
+                  path="/coach/templates"
+                  element={
+                    <CoachRoute>
+                      <TemplatesPage />
+                    </CoachRoute>
+                  }
+                />
 
-        {/* Ruta de Administración (solo administradores) */}
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        />
+                {/* Ruta de Administración (solo administradores) */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
 
-        {/* Redirige rutas de auth obsoletas */}
-        <Route
-          path="/auth"
-          element={<Navigate to="/login" replace />}
-        />
+                {/* Redirige rutas de auth obsoletas */}
+                <Route
+                  path="/auth"
+                  element={<Navigate to="/login" replace />}
+                />
 
-        {/* Redirección para el 404 simple */}
-        <Route path="*" element={<div className="p-8 text-center text-xl" role="alert">404 | Página no encontrada</div>} />
-          </Routes>
-          </main>
-        </Suspense>
+                {/* Redirección para el 404 simple */}
+                <Route path="*" element={<div className="p-8 text-center text-xl" role="alert">404 | Página no encontrada</div>} />
+              </Routes>
+            </main>
+          </Suspense>
+        </ErrorBoundary>
       </div>
     </ErrorBoundary>
   );

@@ -47,17 +47,10 @@ const OnboardingGuard = ({ children }) => {
     const isCoach = user?.role === 'COACH';
     const isAdmin = user?.role === 'ADMIN';
     const isCoachOrAdmin = isCoach || isAdmin;
-    
+
     // Derivar un estado de "onboarding completado" más robusto
-    // Consideramos completado si:
-    // - Es coach/admin (no necesitan onboarding), O
-    // - El backend marca onboarding_completed = true, O
-    // - El usuario ya tiene peso y objetivo configurados (has_weight && has_goal)
-    const isOnboardingCompleted =
-        isCoachOrAdmin ||
-        (onboardingStatus &&
-            (onboardingStatus.onboarding_completed ||
-                (onboardingStatus.has_weight && onboardingStatus.has_goal)));
+    // Solo consideramos completado si es coach/admin o si el backend marca onboarding_completed = true
+    const isOnboardingCompleted = isCoachOrAdmin || (onboardingStatus && onboardingStatus.onboarding_completed);
 
     // Si no hay usuario, redirigir a login
     if (!user) {

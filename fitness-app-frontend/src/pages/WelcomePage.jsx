@@ -76,19 +76,13 @@ const WelcomePage = () => {
     // Mostrar tour interactivo en el primer paso (solo una vez)
     useEffect(() => {
         if (currentStep === 1 && !showTour) {
-            const hasSeenTour = localStorage.getItem('onboarding_tour_completed');
             const completedTours = JSON.parse(localStorage.getItem('completed_tours') || '[]');
             const hasCompletedTour = completedTours.includes('onboarding_welcome');
 
-            if (!hasSeenTour && !hasCompletedTour) {
-                // Usar un pequeño delay para asegurar que el DOM esté listo
+            if (!hasCompletedTour) {
                 const timer = setTimeout(() => {
-                    // Verificar nuevamente antes de mostrar (por si cambió mientras esperábamos)
-                    const stillHasSeenTour = localStorage.getItem('onboarding_tour_completed');
                     const stillCompletedTours = JSON.parse(localStorage.getItem('completed_tours') || '[]');
-                    const stillHasCompletedTour = stillCompletedTours.includes('onboarding_welcome');
-
-                    if (!stillHasSeenTour && !stillHasCompletedTour) {
+                    if (!stillCompletedTours.includes('onboarding_welcome')) {
                         setShowTour(true);
                     }
                 }, 1000);
@@ -165,9 +159,6 @@ const WelcomePage = () => {
                 setRecommendations(response.data.recommendations);
             }
 
-            // Marcar onboarding como completado
-            completeOnboarding();
-
             // Limpiar progreso guardado
             clearProgress();
 
@@ -183,23 +174,10 @@ const WelcomePage = () => {
 
             // Manejo específico para error 403 (Forbidden)
             if (error.response?.status === 403) {
-                logger.warn('Recibido 403 en initial-setup. Verificando estado del usuario...');
-
-                try {
-                    // Verificar si el usuario ya tiene el onboarding completo
-                    const profileCheck = await api.get('/users/profile');
-                    if (profileCheck.data && profileCheck.data.onboarding_completed) {
-                        toast.info('Tu perfil ya estaba configurado. Redirigiendo...');
-                        completeOnboarding();
-                        clearProgress();
-                        setTimeout(() => navigate('/dashboard'), 1000);
-                        return;
-                    }
-                } catch (profileError) {
-                    logger.error('Error al verificar perfil tras 403:', profileError);
-                }
-
-                toast.error('Sesión no válida o sin permisos. Por favor recarga la página.');
+                logger.warn('Recibido 403 en initial-setup. Es probable que el perfil ya esté configurado.');
+                clearProgress();
+                toast.info('Tu perfil ya está configurado. Redirigiendo...');
+                setTimeout(() => navigate('/dashboard'), 1500);
             } else {
                 toast.error(error.response?.data?.error || 'Error al guardar la configuración');
             }

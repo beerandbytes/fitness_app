@@ -9,12 +9,13 @@ const RoleSelectionPage = () => {
     const user = useUserStore((state) => state.user);
     const setUser = useUserStore((state) => state.setUser);
     const brandSettings = useBrandStore((state) => state.brandSettings);
-    
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Si el usuario ya tiene un rol, redirigir según el rol
+        // Si el usuario ya tiene un rol, redirigir según el rol inmediatamente
+        // Esto evita que usuarios que ya pasaron por aquí vuelvan a ver la página
         if (user?.role && user.role !== null) {
             if (user.role === 'ADMIN') {
                 navigate('/admin', { replace: true });
@@ -25,7 +26,7 @@ const RoleSelectionPage = () => {
                 navigate('/dashboard', { replace: true });
             }
         }
-    }, [user, navigate]);
+    }, [user?.role, navigate]);
 
     const handleRoleSelection = async (role) => {
         if (!user) {
@@ -39,10 +40,10 @@ const RoleSelectionPage = () => {
         try {
             // Actualizar el rol del usuario en el backend
             await api.patch('/profile/role', { role });
-            
+
             // Actualizar el usuario en el store
             setUser({ ...user, role: role });
-            
+
             // Redirigir según el rol
             // Los admins van a su dashboard de administración
             // Los coaches van directo a su dashboard
@@ -69,8 +70,8 @@ const RoleSelectionPage = () => {
                 <div className="text-center mb-10">
                     <div className="relative w-20 h-20 mx-auto mb-6">
                         {brandSettings.logo_url ? (
-                            <img 
-                                src={brandSettings.logo_url} 
+                            <img
+                                src={brandSettings.logo_url}
                                 alt={brandSettings.brand_name}
                                 className="w-20 h-20 rounded-3xl object-cover shadow-xl"
                                 onError={(e) => {
@@ -80,7 +81,7 @@ const RoleSelectionPage = () => {
                                 }}
                             />
                         ) : null}
-                        <div 
+                        <div
                             className={`logo-fallback w-20 h-20 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-3xl flex items-center justify-center shadow-xl ${brandSettings.logo_url ? 'hidden absolute inset-0' : ''}`}
                         >
                             <span className="text-white font-bold text-3xl">{brandFirstLetter}</span>

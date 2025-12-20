@@ -13,7 +13,7 @@ const ActiveWorkoutPage = () => {
     const { routineId } = useParams();
     const navigate = useNavigate();
     const toast = useToastStore();
-    
+
     const [routine, setRoutine] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -30,7 +30,7 @@ const ActiveWorkoutPage = () => {
     const [showCelebration, setShowCelebration] = useState(false);
     const [showSkipConfirm, setShowSkipConfirm] = useState(false);
     const [suggestedWeight, setSuggestedWeight] = useState(null);
-    
+
     const restIntervalRef = useRef(null);
     const exerciseIntervalRef = useRef(null);
     const audioRef = useRef(null);
@@ -97,11 +97,32 @@ const ActiveWorkoutPage = () => {
 
     useEffect(() => {
         fetchRoutineDetails();
+
+        // Prevenir salida accidental
+        const handleBeforeUnload = (e) => {
+            if (workoutStartTime && completedExercises.length < (routine?.exercises?.length || 0)) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
         return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
             if (restIntervalRef.current) clearInterval(restIntervalRef.current);
             if (exerciseIntervalRef.current) clearInterval(exerciseIntervalRef.current);
         };
-    }, [fetchRoutineDetails]);
+    }, [fetchRoutineDetails, workoutStartTime, completedExercises.length, routine?.exercises?.length]);
+
+    const handleExit = () => {
+        if (completedExercises.length > 0 && completedExercises.length < (routine?.exercises?.length || 0)) {
+            if (window.confirm('¿Estás seguro de que quieres salir? Tu progreso actual de la rutina se perderá.')) {
+                navigate('/routines');
+            }
+        } else {
+            navigate('/routines');
+        }
+    };
 
     // Cargar historial del ejercicio para sugerencias
     // Usar useRef para acceder al valor más reciente de routine sin causar recreaciones
@@ -194,9 +215,9 @@ const ActiveWorkoutPage = () => {
         setRestTime(restDuration);
         vibrate([100, 50, 100]); // Vibrar al iniciar descanso
         speak('Tiempo de descanso');
-        
+
         if (restIntervalRef.current) clearInterval(restIntervalRef.current);
-        
+
         restIntervalRef.current = setInterval(() => {
             setRestTime((prev) => {
                 if (prev === 10) {
@@ -215,7 +236,7 @@ const ActiveWorkoutPage = () => {
                     speak('1');
                     vibrate([50]);
                 }
-                
+
                 if (prev <= 1) {
                     clearInterval(restIntervalRef.current);
                     setIsResting(false);
@@ -237,7 +258,7 @@ const ActiveWorkoutPage = () => {
 
     const startExerciseTimer = () => {
         if (exerciseIntervalRef.current) clearInterval(exerciseIntervalRef.current);
-        
+
         exerciseIntervalRef.current = setInterval(() => {
             setExerciseTime((prev) => prev + 1);
         }, 1000);
@@ -370,7 +391,7 @@ const ActiveWorkoutPage = () => {
         vibrate([200, 100, 200, 100, 300]);
         speak(`Rutina completada en ${Math.floor(totalTime / 60)} minutos`);
         toast.success(`¡Rutina completada! Tiempo total: ${formatTime(totalTime)}`);
-        
+
         // Mostrar celebración final
         setShowCelebration(true);
         setTimeout(() => {
@@ -425,229 +446,223 @@ const ActiveWorkoutPage = () => {
         <div className="min-h-screen bg-[#FAF3E1] dark:bg-black transition-colors duration-300">
             <ModernNavbar />
             <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 md:pb-8">
-                    {/* Header con progreso */}
-                    <div className="mb-4 sm:mb-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 sm:mb-2">
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
-                                {routine.name}
-                            </h1>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={toggleFullscreen}
-                                    className="p-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                                    aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-                                >
-                                    {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-                                </button>
-                                <button
-                                    onClick={() => setVoiceEnabled(!voiceEnabled)}
-                                    className={`p-2 rounded-xl transition-colors ${
-                                        voiceEnabled 
-                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                {/* Header con progreso */}
+                <div className="mb-4 sm:mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 sm:mb-2">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
+                            {routine.name}
+                        </h1>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={toggleFullscreen}
+                                className="p-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+                            >
+                                {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                            </button>
+                            <button
+                                onClick={() => setVoiceEnabled(!voiceEnabled)}
+                                className={`p-2 rounded-xl transition-colors ${voiceEnabled
+                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                                     }`}
-                                    aria-label={voiceEnabled ? "Desactivar voz" : "Activar voz"}
-                                >
-                                    {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (confirm('¿Estás seguro de que quieres salir? El progreso no guardado se perderá.')) {
-                                            navigate('/routines');
-                                        }
-                                    }}
-                                    className="px-4 py-2 min-h-[44px] bg-red-600 dark:bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-700 dark:hover:bg-red-600 transition-colors w-full sm:w-auto"
-                                >
-                                    Salir
-                                </button>
-                            </div>
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                            <span>Ejercicio {currentExerciseIndex + 1} de {routine.exercises.length}</span>
-                            <span className="hidden sm:inline">•</span>
-                            <span>Tiempo: {formatTime(getTotalWorkoutTime())}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div
-                                className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${progress}%` }}
-                            ></div>
+                                aria-label={voiceEnabled ? "Desactivar voz" : "Activar voz"}
+                            >
+                                {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                            </button>
+                            <button
+                                onClick={handleExit}
+                                className="px-4 py-2 min-h-[44px] bg-red-600 dark:bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-700 dark:hover:bg-red-600 transition-colors w-full sm:w-auto"
+                            >
+                                Salir
+                            </button>
                         </div>
                     </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        <span>Ejercicio {currentExerciseIndex + 1} de {routine.exercises.length}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span>Tiempo: {formatTime(getTotalWorkoutTime())}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                            className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                </div>
 
-                    {/* Modo Descanso con Temporizador Mejorado */}
-                    {isResting && (
-                        <div className="mb-6">
-                            <WorkoutTimer
-                                exerciseDuration={0}
-                                restDuration={restDuration}
-                                onRestComplete={() => {
-                                    setIsResting(false);
-                                    setRestTime(0);
-                                }}
-                                autoStart={true}
-                            />
-                            <div className="text-center mt-4">
-                                <button
-                                    onClick={skipRest}
-                                    className="px-6 py-3 min-h-[44px] bg-yellow-600 dark:bg-yellow-500 text-white rounded-xl font-semibold hover:bg-yellow-700 dark:hover:bg-yellow-600 transition-colors"
-                                >
-                                    Saltar Descanso
-                                </button>
+                {/* Modo Descanso con Temporizador Mejorado */}
+                {isResting && (
+                    <div className="mb-6">
+                        <WorkoutTimer
+                            exerciseDuration={0}
+                            restDuration={restDuration}
+                            onRestComplete={() => {
+                                setIsResting(false);
+                                setRestTime(0);
+                            }}
+                            autoStart={true}
+                        />
+                        <div className="text-center mt-4">
+                            <button
+                                onClick={skipRest}
+                                className="px-6 py-3 min-h-[44px] bg-yellow-600 dark:bg-yellow-500 text-white rounded-xl font-semibold hover:bg-yellow-700 dark:hover:bg-yellow-600 transition-colors"
+                            >
+                                Saltar Descanso
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Ejercicio Actual */}
+                {!isResting && (
+                    <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg">
+                        <div className="text-center mb-4 sm:mb-6">
+                            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                {currentExercise.exercise_name || currentExercise.name}
+                            </h2>
+                            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                                {currentExercise.category}
+                            </p>
+                        </div>
+
+                        {/* Información del ejercicio */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 text-center">
+                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                    Serie {currentSet} / {currentExercise.sets}
+                                </div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    Series
+                                </div>
+                            </div>
+                            <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 text-center">
+                                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                    {formatTime(exerciseTime)}
+                                </div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    Tiempo
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Ejercicio Actual */}
-                    {!isResting && (
-                        <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg">
-                            <div className="text-center mb-4 sm:mb-6">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                                    {currentExercise.exercise_name || currentExercise.name}
-                                </h2>
-                                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                                    {currentExercise.category}
-                                </p>
-                            </div>
-
-                            {/* Información del ejercicio */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
-                                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 text-center">
-                                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                        Serie {currentSet} / {currentExercise.sets}
+                        {/* Detalles de la serie */}
+                        {currentExercise.reps && (
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3 sm:p-4 mb-3 sm:mb-4">
+                                <div className="text-center">
+                                    <div className="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
+                                        Objetivo: {currentExercise.reps} repeticiones
                                     </div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                        Series
-                                    </div>
-                                </div>
-                                <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 text-center">
-                                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                        {formatTime(exerciseTime)}
-                                    </div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                        Tiempo
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Detalles de la serie */}
-                            {currentExercise.reps && (
-                                <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3 sm:p-4 mb-3 sm:mb-4">
-                                    <div className="text-center">
-                                        <div className="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
-                                            Objetivo: {currentExercise.reps} repeticiones
-                                        </div>
-                                        <div className="flex items-center justify-center gap-3 mt-2">
-                                            {currentExercise.weight_kg > 0 && (
-                                                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                                                    Peso rutina: {currentExercise.weight_kg} kg
-                                                </div>
-                                            )}
-                                            {suggestedWeight && (
-                                                <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs sm:text-sm font-medium">
-                                                    💡 Sugerido: {suggestedWeight} kg
-                                                </div>
-                                            )}
-                                        </div>
-                                        {lastExerciseData && (
-                                            <div className="mt-2 text-xs text-gray-500 dark:text-gray-500">
-                                                Última vez: {lastExerciseData.sets_done} series × {lastExerciseData.reps_done || 'N/A'} reps @ {lastExerciseData.weight_kg || 0}kg
+                                    <div className="flex items-center justify-center gap-3 mt-2">
+                                        {currentExercise.weight_kg > 0 && (
+                                            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                                Peso rutina: {currentExercise.weight_kg} kg
+                                            </div>
+                                        )}
+                                        {suggestedWeight && (
+                                            <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs sm:text-sm font-medium">
+                                                💡 Sugerido: {suggestedWeight} kg
                                             </div>
                                         )}
                                     </div>
-                                </div>
-                            )}
-
-                            {currentExercise.duration_minutes && (
-                                <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3 sm:p-4 mb-3 sm:mb-4">
-                                    <div className="text-center">
-                                        <div className="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
-                                            Duración objetivo: {currentExercise.duration_minutes} minutos
+                                    {lastExerciseData && (
+                                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-500">
+                                            Última vez: {lastExerciseData.sets_done} series × {lastExerciseData.reps_done || 'N/A'} reps @ {lastExerciseData.weight_kg || 0}kg
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
-                            )}
-
-                            {/* Series completadas */}
-                            {exerciseDataForCurrent.sets.length > 0 && (
-                                <div className="mb-4">
-                                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                        Series completadas:
-                                    </h3>
-                                    <div className="space-y-2">
-                                        {exerciseDataForCurrent.sets.map((set, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="bg-green-50 dark:bg-green-900/20 rounded-xl p-2 text-sm"
-                                            >
-                                                Serie {set.setNumber}: {set.reps || 'N/A'} reps
-                                                {set.weight > 0 && ` @ ${set.weight}kg`}
-                                                {set.duration > 0 && ` (${formatTime(set.duration)})`}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Botones de acción */}
-                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                                <button
-                                    onClick={() => {
-                                        if (exerciseTime === 0) startExerciseTimer();
-                                        handleSetComplete();
-                                    }}
-                                    className="flex-1 px-6 py-4 min-h-[44px] bg-green-600 dark:bg-green-500 text-white rounded-xl font-bold text-base sm:text-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
-                                >
-                                    {exerciseTime === 0 ? 'Iniciar Serie' : 'Completar Serie'}
-                                </button>
-                                <button
-                                    onClick={handleSkipExercise}
-                                    className="px-6 py-4 min-h-[44px] bg-gray-600 dark:bg-gray-500 text-white rounded-xl font-semibold hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
-                                >
-                                    Saltar Ejercicio
-                                </button>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {/* Lista de ejercicios */}
-                    <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6">
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-base sm:text-lg">
-                            Ejercicios de la rutina
-                        </h3>
-                        <div className="space-y-2">
-                            {routine.exercises.map((ex, idx) => (
-                                <div
-                                    key={ex.routine_exercise_id || idx}
-                                    className={`p-3 rounded-xl border-2 transition-colors ${
-                                        idx === currentExerciseIndex
-                                            ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                            : completedExercises.includes(ex.exercise_id)
-                                            ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20'
-                                            : 'border-gray-200 dark:border-gray-700'
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            {completedExercises.includes(ex.exercise_id) && (
-                                                <span className="text-green-600 dark:text-green-400 text-xl">✓</span>
-                                            )}
-                                            {idx === currentExerciseIndex && !completedExercises.includes(ex.exercise_id) && (
-                                                <span className="text-blue-600 dark:text-blue-400 text-xl">▶</span>
-                                            )}
-                                            <span className="font-medium text-gray-900 dark:text-white">
-                                                {ex.exercise_name || ex.name}
-                                            </span>
-                                        </div>
-                                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                                            {ex.sets} series
-                                            {ex.reps && ` × ${ex.reps} reps`}
-                                        </span>
+                        {currentExercise.duration_minutes && (
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3 sm:p-4 mb-3 sm:mb-4">
+                                <div className="text-center">
+                                    <div className="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-300">
+                                        Duración objetivo: {currentExercise.duration_minutes} minutos
                                     </div>
                                 </div>
-                            ))}
+                            </div>
+                        )}
+
+                        {/* Series completadas */}
+                        {exerciseDataForCurrent.sets.length > 0 && (
+                            <div className="mb-4">
+                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Series completadas:
+                                </h3>
+                                <div className="space-y-2">
+                                    {exerciseDataForCurrent.sets.map((set, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="bg-green-50 dark:bg-green-900/20 rounded-xl p-2 text-sm"
+                                        >
+                                            Serie {set.setNumber}: {set.reps || 'N/A'} reps
+                                            {set.weight > 0 && ` @ ${set.weight}kg`}
+                                            {set.duration > 0 && ` (${formatTime(set.duration)})`}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Botones de acción */}
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                            <button
+                                onClick={() => {
+                                    if (exerciseTime === 0) startExerciseTimer();
+                                    handleSetComplete();
+                                }}
+                                className="flex-1 px-6 py-4 min-h-[44px] bg-green-600 dark:bg-green-500 text-white rounded-xl font-bold text-base sm:text-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                            >
+                                {exerciseTime === 0 ? 'Iniciar Serie' : 'Completar Serie'}
+                            </button>
+                            <button
+                                onClick={handleSkipExercise}
+                                className="px-6 py-4 min-h-[44px] bg-gray-600 dark:bg-gray-500 text-white rounded-xl font-semibold hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                Saltar Ejercicio
+                            </button>
                         </div>
                     </div>
+                )}
+
+                {/* Lista de ejercicios */}
+                <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-base sm:text-lg">
+                        Ejercicios de la rutina
+                    </h3>
+                    <div className="space-y-2">
+                        {routine.exercises.map((ex, idx) => (
+                            <div
+                                key={ex.routine_exercise_id || idx}
+                                className={`p-3 rounded-xl border-2 transition-colors ${idx === currentExerciseIndex
+                                    ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                    : completedExercises.includes(ex.exercise_id)
+                                        ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20'
+                                        : 'border-gray-200 dark:border-gray-700'
+                                    }`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        {completedExercises.includes(ex.exercise_id) && (
+                                            <span className="text-green-600 dark:text-green-400 text-xl">✓</span>
+                                        )}
+                                        {idx === currentExerciseIndex && !completedExercises.includes(ex.exercise_id) && (
+                                            <span className="text-blue-600 dark:text-blue-400 text-xl">▶</span>
+                                        )}
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                            {ex.exercise_name || ex.name}
+                                        </span>
+                                    </div>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                        {ex.sets} series
+                                        {ex.reps && ` × ${ex.reps} reps`}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
                 {/* Animación de celebración */}
                 <AnimatePresence>
@@ -659,7 +674,7 @@ const ActiveWorkoutPage = () => {
                             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
                         >
                             <motion.div
-                                animate={{ 
+                                animate={{
                                     scale: [1, 1.2, 1],
                                     rotate: [0, 5, -5, 0]
                                 }}
@@ -675,8 +690,8 @@ const ActiveWorkoutPage = () => {
                                 </motion.div>
                                 <h3 className="text-3xl font-bold text-white mb-2">¡Excelente!</h3>
                                 <p className="text-white/90 text-lg">
-                                    {currentExerciseIndex < routine.exercises.length - 1 
-                                        ? 'Ejercicio completado' 
+                                    {currentExerciseIndex < routine.exercises.length - 1
+                                        ? 'Ejercicio completado'
                                         : '¡Rutina completada!'}
                                 </p>
                             </motion.div>
@@ -705,7 +720,7 @@ const ActiveWorkoutPage = () => {
                                     ¿Saltar este ejercicio?
                                 </h3>
                                 <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                    Se saltará {currentExercise.exercise_name || currentExercise.name}. 
+                                    Se saltará {currentExercise.exercise_name || currentExercise.name}.
                                     Puedes continuar con el siguiente ejercicio.
                                 </p>
                                 <div className="flex gap-3">
