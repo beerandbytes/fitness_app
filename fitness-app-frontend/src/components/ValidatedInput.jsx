@@ -41,9 +41,7 @@ const ValidatedInput = ({
   }, [validator, onValidation, isValid]);
 
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:30',message:'validation useEffect triggered',data:{value,isTouched,hasValue:!!value,lastValidated:lastValidatedValueRef.current,isProcessing:isProcessingRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+
     
     // Prevenir ejecución si ya se está procesando
     if (isProcessingRef.current) {
@@ -77,9 +75,7 @@ const ValidatedInput = ({
           onValidationRef.current(null, '');
         }
         isProcessingRef.current = false;
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:54',message:'validation cleared',data:{value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
+
       }, 300);
       return;
     }
@@ -94,9 +90,7 @@ const ValidatedInput = ({
         setMessage(result.message || '');
         lastValidationResultRef.current = { valid: result.valid, message: result.message || '' };
         isProcessingRef.current = false;
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:68',message:'validation result',data:{value,isValid:result.valid,hasMessage:!!result.message,messageLength:result.message?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
+
         if (onValidationRef.current) {
           onValidationRef.current(result.valid, result.message);
         }
@@ -120,9 +114,7 @@ const ValidatedInput = ({
   };
 
   const handleChange = (e) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:56',message:'input change',data:{newValue:e.target.value,oldValue:value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+
     setIsTouched(true);
     onChange(e);
   };
