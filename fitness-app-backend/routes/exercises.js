@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 // Reusa el middleware de seguridad para todas las rutas
-const authenticateToken = require('./authMiddleware'); 
+const authenticateToken = require('./authMiddleware');
 
 const { db } = require('../db/db_config'); // Conexión a DB
 const { exercises, users } = require('../db/schema'); // Tablas a usar
@@ -18,20 +18,20 @@ const asyncHandler = require('../middleware/asyncHandler');
 // Crear un nuevo ejercicio en el catálogo.
 // Se asume que los ejercicios creados por el usuario no son "públicos" por defecto
 // a menos que se implemente una lógica más compleja de aprobación. Aquí lo guardamos como público.
-router.post('/', 
+router.post('/',
     authenticateToken,
     routeValidations.createExercise,
     handleValidationErrors,
     asyncHandler(async (req, res) => {
         // Solo necesitamos el user_id para autenticar que es un usuario válido
-        const user_id = req.user.id; 
-        const { 
-            name, 
-            name_es, 
-            category, 
-            default_calories_per_minute, 
-            gif_url, 
-            video_url, 
+        const user_id = req.user.id;
+        const {
+            name,
+            name_es,
+            category,
+            default_calories_per_minute,
+            gif_url,
+            video_url,
             description,
             image_base64,
             video_base64
@@ -86,11 +86,11 @@ router.post('/',
             // Manejar error de duplicado (código 23505 es unique constraint violation en PostgreSQL)
             if (error.code === '23505') {
                 logger.warn(`Intento de crear ejercicio duplicado: ${name}`);
-                return res.status(409).json({ 
-                    error: 'Ya existe un ejercicio con ese nombre.' 
+                return res.status(409).json({
+                    error: 'Ya existe un ejercicio con ese nombre.'
                 });
             }
-            
+
             // Re-lanzar otros errores para que el errorHandler los maneje
             throw error;
         }
@@ -100,7 +100,7 @@ router.post('/',
 
 // --- 2. GET /api/exercises ---
 // Listar todos los ejercicios disponibles (públicos) con paginación y cache.
-router.get('/', 
+router.get('/',
     authenticateToken,
     generalLimiter,
     commonValidations.pagination,
@@ -108,11 +108,13 @@ router.get('/',
     async (req, res) => {
         // El user_id solo se usa para autenticar, no para filtrar ejercicios
         // ya que estamos listando los "públicos"
-        
+
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 20;
             const offset = (page - 1) * limit;
+
+            logger.info(`Fetching exercises: page=${page}, limit=${limit}, offset=${offset}`);
 
             // Cache key basado en página y límite
             const cacheKey = `exercises:public:page:${page}:limit:${limit}`;
@@ -131,8 +133,8 @@ router.get('/',
                 const totalResult = await db.select({
                     count: sql`count(*)`.as('count')
                 })
-                .from(exercises)
-                .where(eq(exercises.is_public, true));
+                    .from(exercises)
+                    .where(eq(exercises.is_public, true));
 
                 const total = parseInt(totalResult[0].count);
 
@@ -156,7 +158,11 @@ router.get('/',
 
         } catch (error) {
             logger.error('Error al obtener ejercicios:', { error: error.message, stack: error.stack });
-            return res.status(500).json({ error: 'Error interno del servidor al obtener el catálogo.' });
+            return res.status(500).json({
+                error: 'Error interno del servidor al obtener el catálogo.',
+                debug_message: error.message,
+                debug_stack: error.stack
+            });
         }
     }
 );
@@ -173,7 +179,7 @@ router.get('/search', authenticateToken, async (req, res) => {
 
     try {
         const searchTerm = `%${name.trim()}%`;
-        
+
         // Buscar en la base de datos local - solo ejercicios públicos
         // Buscar tanto en 'name' como en 'name_es' usando OR
         const localResults = await db.select()
@@ -190,7 +196,7 @@ router.get('/search', authenticateToken, async (req, res) => {
             ))
             .orderBy(asc(exercises.name))
             .limit(20);
-        
+
         return res.status(200).json({
             exercises: localResults.map(ex => ({ ...ex, source: 'local' })),
             count: localResults.length,
@@ -305,10 +311,10 @@ router.get('/by-muscle-group', authenticateToken, async (req, res) => {
 
     const validGroups = ['pecho', 'pierna', 'piernas', 'espalda', 'brazos', 'brazo', 'hombros', 'hombro'];
     const normalizedGroup = group.toLowerCase();
-    
+
     if (!validGroups.includes(normalizedGroup)) {
-        return res.status(400).json({ 
-            error: 'Grupo muscular no válido. Valores válidos: pecho, pierna, espalda, brazos, hombros' 
+        return res.status(400).json({
+            error: 'Grupo muscular no válido. Valores válidos: pecho, pierna, espalda, brazos, hombros'
         });
     }
 
@@ -325,10 +331,10 @@ router.get('/by-muscle-group', authenticateToken, async (req, res) => {
             'hombros': ['hombro', 'shoulder', 'press militar', 'elevación', 'lateral', 'overhead press', 'military press', 'arnold press', 'raise', 'fly', 'vuelo', 'upright row', 'remo vertical', 'shrug', 'encogimiento'],
             'hombro': ['hombro', 'shoulder', 'press militar', 'elevación', 'lateral', 'overhead press', 'military press', 'arnold press', 'raise', 'fly', 'vuelo', 'upright row', 'remo vertical', 'shrug', 'encogimiento']
         };
-        
+
         const keywords = muscleGroupKeywords[normalizedGroup] || [];
         let localResults = [];
-        
+
         // Buscar ejercicios locales que coincidan con las palabras clave y sean públicos
         // Buscar tanto en 'name' como en 'name_es'
         if (keywords.length > 0) {
@@ -344,7 +350,7 @@ router.get('/by-muscle-group', authenticateToken, async (req, res) => {
                     )
                 );
             });
-            
+
             // Usar OR para buscar cualquier palabra clave Y filtrar por is_public = true
             localResults = await db.select()
                 .from(exercises)
@@ -355,7 +361,7 @@ router.get('/by-muscle-group', authenticateToken, async (req, res) => {
                 .orderBy(asc(exercises.name))
                 .limit(100);
         }
-        
+
         return res.status(200).json({
             exercises: localResults.map(ex => ({ ...ex, source: 'local', muscle_group: normalizedGroup })),
             count: localResults.length,
