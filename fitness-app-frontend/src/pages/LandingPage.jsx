@@ -336,8 +336,8 @@ const LandingPage = () => {
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
-            ? 'backdrop-blur-xl bg-white/95 dark:bg-black/95 border-b border-gray-200/50 dark:border-gray-800/50 shadow-sm'
-            : 'backdrop-blur-md bg-white/60 dark:bg-black/60'
+          ? 'backdrop-blur-xl bg-white/95 dark:bg-black/95 border-b border-gray-200/50 dark:border-gray-800/50 shadow-sm'
+          : 'backdrop-blur-md bg-white/60 dark:bg-black/60'
           }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 sm:py-4">
@@ -472,7 +472,7 @@ const LandingPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="text-base sm:text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4 relative z-10 font-medium text-center"
+            className="text-base sm:text-lg md:text-xl text-gray-900 dark:text-gray-300 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4 relative z-10 font-medium text-center"
           >
             La plataforma de fitness más completa. Crea rutinas personalizadas,
             controla tu nutrición y alcanza tus objetivos con el seguimiento perfecto.
@@ -549,7 +549,7 @@ const LandingPage = () => {
                 resultados
               </span>
             </h2>
-            <p className="text-base sm:text-lg text-gray-700 dark:text-gray-400 max-w-2xl mx-auto px-4 text-center">
+            <p className="text-base sm:text-lg text-gray-900 dark:text-gray-400 max-w-2xl mx-auto px-4 text-center">
               Todo lo que necesitas para alcanzar tus objetivos de fitness
             </p>
           </motion.div>
@@ -579,7 +579,7 @@ const LandingPage = () => {
                   <h3 className="text-xl sm:text-2xl font-medium text-gray-900 dark:text-white mb-2 text-center w-full">
                     {feature.title}
                   </h3>
-                  <p className="text-sm sm:text-base text-gray-700 dark:text-gray-400 leading-relaxed text-center w-full">
+                  <p className="text-sm sm:text-base text-gray-900 dark:text-gray-400 leading-relaxed text-center w-full">
                     {feature.description}
                   </p>
                 </div>
@@ -661,7 +661,7 @@ const LandingPage = () => {
                 {brandSettings.brand_name || 'nosotros'}?
               </span>
             </h2>
-            <p className="text-base sm:text-lg text-gray-700 dark:text-gray-400 max-w-2xl mx-auto px-4 text-center w-full">
+            <p className="text-base sm:text-lg text-gray-900 dark:text-gray-400 max-w-2xl mx-auto px-4 text-center w-full">
               Todo lo que necesitas en un solo lugar
             </p>
           </motion.div>
@@ -742,7 +742,7 @@ const LandingPage = () => {
                 <h3 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-white mb-2 text-center">
                   {benefit.title}
                 </h3>
-                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-400 text-center leading-relaxed">
+                <p className="text-sm sm:text-base text-gray-900 dark:text-gray-400 text-center leading-relaxed">
                   {benefit.description}
                 </p>
               </motion.div>
@@ -808,7 +808,7 @@ const LandingPage = () => {
                   transformarte?
                 </span>
               </h2>
-              <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 max-w-xl mx-auto px-4 font-medium text-center">
+              <p className="text-base sm:text-lg text-gray-900 dark:text-gray-300 mb-6 sm:mb-8 max-w-xl mx-auto px-4 font-medium text-center">
                 Únete a miles de usuarios que ya están alcanzando sus objetivos
               </p>
               <motion.button
