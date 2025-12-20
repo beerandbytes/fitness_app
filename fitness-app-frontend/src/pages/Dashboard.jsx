@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, lazy, Suspense, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModernNavbar from '../components/ModernNavbar';
 import BottomNavigation from '../components/BottomNavigation';
@@ -24,26 +24,26 @@ const WeightLineChart = lazy(() => import('../components/WeightLineChart'));
 
 // Skeleton para WeightLineChart
 const WeightChartSkeleton = () => (
-  <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm animate-pulse">
-    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
-    <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-  </div>
-); 
+    <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm animate-pulse">
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+        <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    </div>
+);
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const [currentDate] = useState(new Date());
-    const [log, setLog] = useState(null); 
+    const [log, setLog] = useState(null);
     const [mealItems, setMealItems] = useState([]);
     const [goal, setGoal] = useState(null);
     const [loading, setLoading] = useState(true);
     const [weeklyComparison, setWeeklyComparison] = useState(null);
     const [monthlyProgress, setMonthlyProgress] = useState(null);
     const [streak, setStreak] = useState(0);
-    
+
     // Memoizar formattedDate para evitar recreación en cada render
     const formattedDate = useMemo(() => format(currentDate, 'yyyy-MM-dd'), [currentDate]);
-    
+
     // Extraer valores primitivos de log y goal para usar como dependencias estables
     const logId = log?.id;
     const logWeight = log?.weight;
@@ -52,11 +52,11 @@ const Dashboard = () => {
     const goalTargetWeight = goal?.target_weight;
     const goalCurrentWeight = goal?.current_weight;
     const goalType = goal?.goal_type;
-    
+
     const fetchDailyLog = useCallback(async () => {
         try {
             const response = await api.get(`/logs/${formattedDate}`);
-            setLog(response.data.log); 
+            setLog(response.data.log);
             setMealItems(response.data.mealItems || []);
         } catch (err) {
             logger.error('Error al cargar log diario:', err);
@@ -82,25 +82,25 @@ const Dashboard = () => {
     // Usar useRef para acceder a los valores más recientes de log y goal
     const logRef = useRef(log);
     const goalRef = useRef(goal);
-    
+
     // Actualizar refs cuando cambien los objetos
     useEffect(() => {
         logRef.current = log;
     }, [log]);
-    
+
     useEffect(() => {
         goalRef.current = goal;
     }, [goal]);
-    
+
     const fetchComparisons = useCallback(async () => {
         // Usar los valores más recientes desde los refs
         const currentLog = logRef.current;
         const currentGoal = goalRef.current;
-        
+
         if (!currentLog || !currentGoal) {
             return;
         }
-        
+
         try {
             const weekAgo = format(subDays(currentDate, 7), 'yyyy-MM-dd');
             const monthAgo = format(subDays(currentDate, 30), 'yyyy-MM-dd');
@@ -109,11 +109,11 @@ const Dashboard = () => {
             try {
                 const weekAgoResponse = await api.get(`/logs/${weekAgo}`);
                 const weekAgoLog = weekAgoResponse.data.log;
-                
+
                 if (weekAgoLog && currentLog) {
                     const weightDiff = parseFloat(currentLog.weight) - parseFloat(weekAgoLog.weight);
                     const caloriesDiff = parseFloat(currentLog.consumed_calories) - parseFloat(weekAgoLog.consumed_calories);
-                    
+
                     setWeeklyComparison({
                         weightDiff,
                         caloriesDiff,
@@ -128,17 +128,17 @@ const Dashboard = () => {
             try {
                 const monthAgoResponse = await api.get(`/logs/${monthAgo}`);
                 const monthAgoLog = monthAgoResponse.data.log;
-                
+
                 if (monthAgoLog && currentLog && currentGoal) {
                     const currentWeight = parseFloat(currentLog.weight);
                     const monthAgoWeight = parseFloat(monthAgoLog.weight);
                     const targetWeight = parseFloat(currentGoal.target_weight);
                     const startWeight = parseFloat(currentGoal.current_weight);
-                    
+
                     const totalProgress = currentGoal.goal_type === 'weight_loss'
                         ? (startWeight - currentWeight) / (startWeight - targetWeight) * 100
                         : (currentWeight - startWeight) / (targetWeight - startWeight) * 100;
-                    
+
                     const monthlyProgressValue = currentGoal.goal_type === 'weight_loss'
                         ? startWeight - currentWeight
                         : currentWeight - startWeight;
@@ -189,7 +189,7 @@ const Dashboard = () => {
         if (!item || !item.food) return acc;
         const quantity = parseFloat(item.quantity_grams) || 0;
         const food = item.food;
-        
+
         acc.protein += (parseFloat(food.protein_g || 0) / 100) * quantity;
         acc.carbs += (parseFloat(food.carbs_g || 0) / 100) * quantity;
         acc.fat += (parseFloat(food.fat_g || 0) / 100) * quantity;
@@ -198,8 +198,8 @@ const Dashboard = () => {
 
     const caloriesConsumed = log ? parseFloat(log.consumed_calories) : 0;
     // Usar el objetivo del usuario si existe, de lo contrario usar un valor por defecto
-    const calorieGoal = goal && goal.daily_calorie_goal 
-        ? parseFloat(goal.daily_calorie_goal) 
+    const calorieGoal = goal && goal.daily_calorie_goal
+        ? parseFloat(goal.daily_calorie_goal)
         : 2000; // Valor por defecto si no hay objetivo
     const caloriesBurned = log ? parseFloat(log.burned_calories) : 0;
 
@@ -227,7 +227,7 @@ const Dashboard = () => {
 
                             {/* Widget de Próxima Acción e Insights */}
                             <div className="mb-6">
-                                <SmartRecommendations 
+                                <SmartRecommendations
                                     goal={goal}
                                     log={log}
                                     mealItems={mealItems}
@@ -340,8 +340,8 @@ const Dashboard = () => {
                                             </span>
                                         )}
                                     </div>
-                                    <CalorieRadialChart 
-                                        consumed={caloriesConsumed} 
+                                    <CalorieRadialChart
+                                        consumed={caloriesConsumed}
                                         goal={calorieGoal}
                                     />
                                     {!goal && (
@@ -355,7 +355,7 @@ const Dashboard = () => {
 
                                 {/* Gestor de Objetivos */}
                                 <div data-tour="goals-widget">
-                                    <GoalManager 
+                                    <GoalManager
                                         currentWeight={log ? parseFloat(log.weight) : null}
                                         onGoalUpdated={(updatedGoal) => {
                                             setGoal(updatedGoal);
@@ -449,7 +449,7 @@ const Dashboard = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm hover:shadow-md transition-all duration-300">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">

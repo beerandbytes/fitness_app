@@ -163,20 +163,51 @@ const WelcomePage = () => {
             // Guardar recomendaciones si vienen en la respuesta
             if (response.data.recommendations) {
                 setRecommendations(response.data.recommendations);
-                setCurrentStep(5); // Mostrar paso de recomendaciones
-            } else {
-                // Si no hay recomendaciones, redirigir al dashboard
-                trackEvent(AnalyticsEvents.ONBOARDING_COMPLETED);
-                // El OnboardingGuard se encargará de verificar el estado
-                navigate('/dashboard', { replace: true });
             }
+
+            // Marcar onboarding como completado
+            completeOnboarding();
+
+            // Limpiar progreso guardado
+            clearProgress();
+
+            toast.success('¡Configuración completada!');
+
+            // Pequeña demora para asegurar que el toast se vea
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 1000);
+
         } catch (error) {
-            logger.error('Error al completar onboarding:', error);
-            toast.error(error.response?.data?.error || 'Error al completar la configuración');
+            logger.error('Error en completado de onboarding:', error);
+
+            // Manejo específico para error 403 (Forbidden)
+            if (error.response?.status === 403) {
+                logger.warn('Recibido 403 en initial-setup. Verificando estado del usuario...');
+
+                try {
+                    // Verificar si el usuario ya tiene el onboarding completo
+                    const profileCheck = await api.get('/users/profile');
+                    if (profileCheck.data && profileCheck.data.onboarding_completed) {
+                        toast.info('Tu perfil ya estaba configurado. Redirigiendo...');
+                        completeOnboarding();
+                        clearProgress();
+                        setTimeout(() => navigate('/dashboard'), 1000);
+                        return;
+                    }
+                } catch (profileError) {
+                    logger.error('Error al verificar perfil tras 403:', profileError);
+                }
+
+                toast.error('Sesión no válida o sin permisos. Por favor recarga la página.');
+            } else {
+                toast.error(error.response?.data?.error || 'Error al guardar la configuración');
+            }
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleFinish = async () => {
         // Limpiar progreso guardado al completar
