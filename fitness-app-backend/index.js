@@ -6,10 +6,10 @@ const { validateEnvVars } = require('./config/envValidator');
 const logger = require('./utils/logger');
 
 try {
-  validateEnvVars();
+    validateEnvVars();
 } catch (error) {
-  logger.error(error.message);
-  process.exit(1);
+    logger.error(error.message);
+    process.exit(1);
 }
 
 const express = require('express');
@@ -71,6 +71,11 @@ const sanitize = require('./middleware/sanitize');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Configuración de Proxy (Crucial para deployment y ngrok)
+// 'trust proxy' permite que Express confíe en los headers X-Forwarded-*
+// El valor 1 confía en el primer proxy (ej: ngrok, Render LB)
+app.set('trust proxy', 1);
+
 // Crear servidor HTTP para Socket.IO
 const httpServer = require('http').createServer(app);
 const { setupSocketServer } = require('./socketServer');
@@ -88,18 +93,18 @@ app.use(responseTimeMiddleware);
 
 // Helmet para headers de seguridad
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://api.fontshare.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // unsafe-eval necesario para Vite en desarrollo
-      imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: ["'self'", process.env.FRONTEND_URL, process.env.VITE_API_URL].filter(Boolean),
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://api.fontshare.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // unsafe-eval necesario para Vite en desarrollo
+            imgSrc: ["'self'", "data:", "https:", "http:"],
+            connectSrc: ["'self'", process.env.FRONTEND_URL, process.env.VITE_API_URL].filter(Boolean),
+        },
     },
-  },
-  crossOriginEmbedderPolicy: false, // Necesario para algunas integraciones
-  crossOriginResourcePolicy: { policy: "cross-origin" }, // Permitir recursos cross-origin
+    crossOriginEmbedderPolicy: false, // Necesario para algunas integraciones
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Permitir recursos cross-origin
 }));
 
 // Compresión de respuestas (gzip/brotli) - debe ir antes de otras rutas
@@ -129,12 +134,12 @@ const corsOptions = {
     origin: function (origin, callback) {
         // Permitir requests sin origen (móviles, Postman, etc.)
         if (!origin) return callback(null, true);
-        
+
         // En desarrollo, permitir todos
         if (process.env.NODE_ENV !== 'production') {
             return callback(null, true);
         }
-        
+
         // En producción, verificar orígenes permitidos
         const allowedOrigins = [
             process.env.FRONTEND_URL,
@@ -147,7 +152,7 @@ const corsOptions = {
             'http://localhost:5173',
             'http://localhost:3000'
         ].filter(Boolean);
-        
+
         // Verificar si el origen está permitido
         const isAllowed = allowedOrigins.some(allowed => {
             if (typeof allowed === 'string') {
@@ -157,7 +162,7 @@ const corsOptions = {
             }
             return false;
         });
-        
+
         if (isAllowed) {
             callback(null, true);
         } else {
@@ -336,7 +341,7 @@ app.get('/api/profile/streak', authenticateToken, async (req, res) => {
         if (dates.includes(today) || dates.includes(yesterdayStr)) {
             streak = 1;
             let currentDate = dates.includes(today) ? today : yesterdayStr;
-            
+
             for (let i = 0; i < dates.length; i++) {
                 if (dates[i] === currentDate) {
                     streak++;
