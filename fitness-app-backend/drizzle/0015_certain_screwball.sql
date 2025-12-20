@@ -1,4 +1,4 @@
-CREATE TABLE "user_follows" (
+CREATE TABLE IF NOT EXISTS "user_follows" (
 	"follow_id" serial PRIMARY KEY NOT NULL,
 	"follower_id" integer NOT NULL,
 	"following_id" integer NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE "user_follows" (
 	CONSTRAINT "follow_unique" UNIQUE("follower_id","following_id")
 );
 --> statement-breakpoint
-CREATE TABLE "shared_workouts" (
+CREATE TABLE IF NOT EXISTS "shared_workouts" (
 	"share_id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"routine_id" integer NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE "shared_workouts" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "workout_likes" (
+CREATE TABLE IF NOT EXISTS "workout_likes" (
 	"like_id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"share_id" integer NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE "workout_likes" (
 	CONSTRAINT "like_unique" UNIQUE("user_id","share_id")
 );
 --> statement-breakpoint
-CREATE TABLE "workout_comments" (
+CREATE TABLE IF NOT EXISTS "workout_comments" (
 	"comment_id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"share_id" integer NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE "workout_comments" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "body_measurements" (
+CREATE TABLE IF NOT EXISTS "body_measurements" (
 	"measurement_id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"date" date NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE "body_measurements" (
 	CONSTRAINT "measurement_unique" UNIQUE("user_id","date")
 );
 --> statement-breakpoint
-CREATE TABLE "progress_photos" (
+CREATE TABLE IF NOT EXISTS "progress_photos" (
 	"photo_id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"date" date NOT NULL,
@@ -63,17 +63,66 @@ CREATE TABLE "progress_photos" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-ALTER TABLE "exercises" ADD COLUMN "name_es" varchar(100);--> statement-breakpoint
-ALTER TABLE "exercises" ADD COLUMN "description" text;--> statement-breakpoint
-ALTER TABLE "exercises" ADD COLUMN "muscles" text;--> statement-breakpoint
-ALTER TABLE "exercises" ADD COLUMN "equipment" text;--> statement-breakpoint
-ALTER TABLE "user_follows" ADD CONSTRAINT "user_follows_follower_id_users_user_id_fk" FOREIGN KEY ("follower_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_follows" ADD CONSTRAINT "user_follows_following_id_users_user_id_fk" FOREIGN KEY ("following_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "shared_workouts" ADD CONSTRAINT "shared_workouts_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "shared_workouts" ADD CONSTRAINT "shared_workouts_routine_id_routines_routine_id_fk" FOREIGN KEY ("routine_id") REFERENCES "public"."routines"("routine_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "workout_likes" ADD CONSTRAINT "workout_likes_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "workout_likes" ADD CONSTRAINT "workout_likes_share_id_shared_workouts_share_id_fk" FOREIGN KEY ("share_id") REFERENCES "public"."shared_workouts"("share_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "workout_comments" ADD CONSTRAINT "workout_comments_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "workout_comments" ADD CONSTRAINT "workout_comments_share_id_shared_workouts_share_id_fk" FOREIGN KEY ("share_id") REFERENCES "public"."shared_workouts"("share_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "body_measurements" ADD CONSTRAINT "body_measurements_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "progress_photos" ADD CONSTRAINT "progress_photos_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "exercises" ADD COLUMN IF NOT EXISTS "name_es" varchar(100);--> statement-breakpoint
+ALTER TABLE "exercises" ADD COLUMN IF NOT EXISTS "description" text;--> statement-breakpoint
+ALTER TABLE "exercises" ADD COLUMN IF NOT EXISTS "muscles" text;--> statement-breakpoint
+ALTER TABLE "exercises" ADD COLUMN IF NOT EXISTS "equipment" text;--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "user_follows" ADD CONSTRAINT "user_follows_follower_id_users_user_id_fk" FOREIGN KEY ("follower_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "user_follows" ADD CONSTRAINT "user_follows_following_id_users_user_id_fk" FOREIGN KEY ("following_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "shared_workouts" ADD CONSTRAINT "shared_workouts_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "shared_workouts" ADD CONSTRAINT "shared_workouts_routine_id_routines_routine_id_fk" FOREIGN KEY ("routine_id") REFERENCES "public"."routines"("routine_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "workout_likes" ADD CONSTRAINT "workout_likes_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "workout_likes" ADD CONSTRAINT "workout_likes_share_id_shared_workouts_share_id_fk" FOREIGN KEY ("share_id") REFERENCES "public"."shared_workouts"("share_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "workout_comments" ADD CONSTRAINT "workout_comments_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "workout_comments" ADD CONSTRAINT "workout_comments_share_id_shared_workouts_share_id_fk" FOREIGN KEY ("share_id") REFERENCES "public"."shared_workouts"("share_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "body_measurements" ADD CONSTRAINT "body_measurements_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "progress_photos" ADD CONSTRAINT "progress_photos_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
