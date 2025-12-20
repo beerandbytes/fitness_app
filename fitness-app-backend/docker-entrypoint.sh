@@ -9,6 +9,11 @@ npm run db:migrate 2>&1 || {
     node scripts/fix_exercises_schema.js 2>&1 || echo "❌ El parche manual también falló."
 }
 
+# Poblar datos iniciales si es necesario (ejercicios y alimentos)
+# Esto revisa si las tablas están vacías y las llena automáticamente
+echo "🌱 Verificando/Poblando datos iniciales..."
+npm run seed:all 2>&1 || echo "⚠️  Advertencia: Hubo un problema al poblar datos, pero el servidor iniciará."
+
 # Verificar variables de entorno críticas
 echo "🔍 Verificando variables de entorno..."
 if [ -z "$DATABASE_URL" ]; then
