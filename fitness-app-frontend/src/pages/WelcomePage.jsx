@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useBrandStore from '../stores/useBrandStore';
 import useToastStore from '../stores/useToastStore';
@@ -435,8 +435,8 @@ const WelcomePage = () => {
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, gender: option.value }))}
                                             className={`p-4 rounded-2xl border-2 transition-all ${formData.gender === option.value
-                                                    ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                                    : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-400 dark:hover:border-blue-600'
+                                                ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                                : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-400 dark:hover:border-blue-600'
                                                 }`}
                                         >
                                             <div className="text-3xl mb-2">{option.icon}</div>
@@ -551,8 +551,8 @@ const WelcomePage = () => {
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, goal_type: goal.value }))}
                                             className={`p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${formData.goal_type === goal.value
-                                                    ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                                                    : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-400 dark:hover:border-blue-600'
+                                                ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                                                : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-blue-400 dark:hover:border-blue-600'
                                                 }`}
                                         >
                                             <div className="flex-shrink-0">
