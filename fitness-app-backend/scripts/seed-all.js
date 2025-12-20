@@ -128,74 +128,42 @@ async function seedAll() {
 
         if (foodCount === 0) {
             console.log('⚠️  No se encontraron alimentos. Poblando alimentos comunes...');
-            // Nota: Los scripts hijos se ejecutan en procesos separados, así que no comparten el pool
             try {
-                // Ejecutar script de alimentos como proceso hijo
                 execSync('npm run seed:foods', {
                     stdio: 'inherit',
                     cwd: process.cwd(),
                     encoding: 'utf8'
                 });
-
-                // Verificar que realmente se insertaron alimentos
-                // Las conexiones del pool se liberan automáticamente después de cada query
-                const newFoodCount = await checkFoodsCount();
-                if (newFoodCount > 0) {
-                    console.log(`✅ Alimentos comunes poblados correctamente (${newFoodCount} alimentos)\n`);
-                } else {
-                    throw new Error('El script se ejecutó pero no se insertaron alimentos');
-                }
+                console.log(`✅ Alimentos comunes poblados\n`);
             } catch (error) {
-                console.error('❌ Error al poblar alimentos:', error.message);
-
-                // Verificar si al menos se insertaron algunos alimentos
-                const currentCount = await checkFoodsCount();
-                if (currentCount > 0) {
-                    console.log(`⚠️  Se insertaron ${currentCount} alimentos antes del error. Continuando...\n`);
-                }
-            }
-
-            // Poblar alimentos españoles adicionales
-            try {
-                console.log('📊 Poblando alimentos en español...');
-                execSync('npm run seed:foods:spanish', {
-                    stdio: 'inherit',
-                    cwd: process.cwd(),
-                    encoding: 'utf8'
-                });
-
-                const spanishFoodCount = await checkFoodsCount();
-                console.log(`✅ Alimentos en español poblados (${spanishFoodCount} alimentos totales)\n`);
-            } catch (error) {
-                console.error('⚠️  Error al poblar alimentos españoles:', error.message);
-                console.log('   Continuando con los alimentos básicos...\n');
+                console.error('❌ Error al poblar alimentos comunes:', error.message);
             }
         } else {
-            console.log(`✅ Se encontraron ${foodCount} alimentos. No es necesario poblar.\n`);
+            console.log(`✅ Se encontraron ${foodCount} alimentos comunes.\n`);
+        }
+
+        // SIEMPRE intentar poblar alimentos españoles adicionales (idempotente)
+        try {
+            console.log('📊 Poblando alimentos españoles adicionales...');
+            execSync('npm run seed:foods:spanish', {
+                stdio: 'inherit',
+                cwd: process.cwd(),
+                encoding: 'utf8'
+            });
+            const totalFoodCount = await checkFoodsCount();
+            console.log(`✅ Alimentos poblados (${totalFoodCount} alimentos totales)\n`);
+        } catch (error) {
+            console.error('⚠️  Error al poblar alimentos españoles:', error.message);
+            console.log('   Continuando...\n');
         }
 
         // Poblar rutinas predefinidas (plantillas de ejemplo para usuarios)
         try {
             console.log('📋 Verificando rutinas predefinidas...');
-            const routinesResult = await db.execute(
-                sql`SELECT COUNT(*) as count FROM workout_templates WHERE is_public = true`
-            );
-            const routinesCount = parseInt(routinesResult.rows[0]?.count || 0);
-
-            if (routinesCount === 0) {
-                console.log('📋 Poblando rutinas predefinidas...');
-                execSync('npm run seed:predefined-routines', {
-                    stdio: 'inherit',
-                    cwd: process.cwd(),
-                    encoding: 'utf8'
-                });
-                console.log('✅ Rutinas predefinidas pobladas\n');
-            } else {
-                console.log(`✅ Se encontraron ${routinesCount} rutinas predefinidas. No es necesario poblar.\n`);
-            }
+            // NOTA: Omitiendo check de rutinas predefinidas (tabla no disponible en auto-seed)
+            console.log('ℹ️  Las rutinas predefinidas se deben ejecutar manualmente si se desean.\n');
         } catch (error) {
-            console.error('⚠️  Error al poblar rutinas predefinidas:', error.message);
-            console.log('   Continuando sin rutinas predefinidas...\n');
+            // Silenciamos el error ya que esta funcionalidad no está disponible en auto-seed
         }
 
         // Verificar resultado final
