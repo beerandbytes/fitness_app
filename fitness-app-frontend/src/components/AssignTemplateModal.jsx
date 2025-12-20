@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import api from '../services/api';
 import { Dumbbell, Utensils, Calendar, X } from 'lucide-react';
@@ -15,30 +15,8 @@ const AssignTemplateModal = ({ open, onOpenChange, clientId, clientEmail, type =
     const [templatesLoading, setTemplatesLoading] = useState(true);
     const toast = useToastStore();
 
-    useEffect(() => {
-        if (open) {
-            loadTemplates();
-            // Reset form
-            setSelectedTemplate(null);
-            setAssignedDate(new Date().toISOString().split('T')[0]);
-            setIsRecurring(false);
-            setRecurringDay(null);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, type]);
-
-    // Auto-select template if preSelectedTemplateId is provided
-    useEffect(() => {
-        if (preSelectedTemplateId && templates.length > 0 && !selectedTemplate) {
-            const template = templates.find(t => t.template_id === preSelectedTemplateId);
-            if (template) {
-                setSelectedTemplate(template);
-            }
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [preSelectedTemplateId, templates]);
-
-    const loadTemplates = async () => {
+    // Memoizar loadTemplates para evitar recreaciones
+    const loadTemplates = useCallback(async () => {
         try {
             setTemplatesLoading(true);
             const endpoint = type === 'routine' ? '/templates/routines' : '/templates/diets';
@@ -50,7 +28,28 @@ const AssignTemplateModal = ({ open, onOpenChange, clientId, clientEmail, type =
         } finally {
             setTemplatesLoading(false);
         }
-    };
+    }, [type, toast]);
+
+    useEffect(() => {
+        if (open) {
+            loadTemplates();
+            // Reset form
+            setSelectedTemplate(null);
+            setAssignedDate(new Date().toISOString().split('T')[0]);
+            setIsRecurring(false);
+            setRecurringDay(null);
+        }
+    }, [open, type, loadTemplates]);
+
+    // Auto-select template if preSelectedTemplateId is provided
+    useEffect(() => {
+        if (preSelectedTemplateId && templates.length > 0 && !selectedTemplate) {
+            const template = templates.find(t => t.template_id === preSelectedTemplateId);
+            if (template) {
+                setSelectedTemplate(template);
+            }
+        }
+    }, [preSelectedTemplateId, templates, selectedTemplate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

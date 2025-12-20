@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -1019,50 +1019,8 @@ const ExerciseListBuilder = ({ exercises, setExercises }) => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-    // Cargar detalles de ejercicios cuando se monta el componente o cambian los ejercicios
-    useEffect(() => {
-        const loadExerciseDetails = async () => {
-            const exerciseIds = exercises
-                .map(ex => ex.exercise_id)
-                .filter(id => id && !exerciseDetails[id]);
-
-            if (exerciseIds.length === 0) return;
-
-            try {
-                // Cargar ejercicios específicos por sus IDs usando el nuevo endpoint
-                const idsParam = exerciseIds.join(',');
-                const response = await api.get(`/exercises/by-ids?ids=${idsParam}`);
-                const foundExercises = response.data?.exercises || [];
-                
-                // Crear un mapa de ejercicios por ID
-                const newDetails = {};
-                foundExercises.forEach(exercise => {
-                    newDetails[exercise.exercise_id] = exercise;
-                });
-                
-                if (Object.keys(newDetails).length > 0) {
-                    setExerciseDetails(prev => ({ ...prev, ...newDetails }));
-                }
-            } catch (error) {
-                logger.error('Error cargando detalles de ejercicios:', error);
-            }
-        };
-
-        loadExerciseDetails();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [exercises]);
-
-    // Búsqueda de ejercicios
-    useEffect(() => {
-        if (debouncedSearchQuery.length >= 2) {
-            searchExercises(debouncedSearchQuery);
-        } else {
-            setSearchResults([]);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedSearchQuery]);
-
-    const searchExercises = async (query) => {
+    // Memoizar searchExercises para evitar recreaciones
+    const searchExercises = useCallback(async (query) => {
         try {
             setLoading(true);
             const response = await api.get(`/exercises/search?name=${encodeURIComponent(query)}`);
@@ -1074,7 +1032,49 @@ const ExerciseListBuilder = ({ exercises, setExercises }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    // Memoizar loadExerciseDetails para evitar recreaciones
+    const loadExerciseDetails = useCallback(async () => {
+        const exerciseIds = exercises
+            .map(ex => ex.exercise_id)
+            .filter(id => id && !exerciseDetails[id]);
+
+        if (exerciseIds.length === 0) return;
+
+        try {
+            // Cargar ejercicios específicos por sus IDs usando el nuevo endpoint
+            const idsParam = exerciseIds.join(',');
+            const response = await api.get(`/exercises/by-ids?ids=${idsParam}`);
+            const foundExercises = response.data?.exercises || [];
+            
+            // Crear un mapa de ejercicios por ID
+            const newDetails = {};
+            foundExercises.forEach(exercise => {
+                newDetails[exercise.exercise_id] = exercise;
+            });
+            
+            if (Object.keys(newDetails).length > 0) {
+                setExerciseDetails(prev => ({ ...prev, ...newDetails }));
+            }
+        } catch (error) {
+            logger.error('Error cargando detalles de ejercicios:', error);
+        }
+    }, [exercises, exerciseDetails]);
+
+    // Cargar detalles de ejercicios cuando se monta el componente o cambian los ejercicios
+    useEffect(() => {
+        loadExerciseDetails();
+    }, [loadExerciseDetails]);
+
+    // Búsqueda de ejercicios
+    useEffect(() => {
+        if (debouncedSearchQuery.length >= 2) {
+            searchExercises(debouncedSearchQuery);
+        } else {
+            setSearchResults([]);
+        }
+    }, [debouncedSearchQuery, searchExercises]);
 
     const handleExerciseSelect = (exercise) => {
         setSelectedExercise(exercise);

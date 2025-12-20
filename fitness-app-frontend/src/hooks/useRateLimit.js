@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useCallback } from 'react';
 
 /**
  * Hook para rate limiting de funciones
@@ -9,8 +9,14 @@ import { useRef } from 'react';
  */
 export const useRateLimit = (fn, limit = 10, windowMs = 1000) => {
   const calls = useRef([]);
+  // Usar ref para almacenar la referencia más reciente de fn y evitar stale closures
+  const fnRef = useRef(fn);
 
-  return (...args) => {
+  // Actualizar la referencia del callback siempre
+  fnRef.current = fn;
+
+  // Memoizar la función retornada para evitar recreaciones en cada render
+  return useCallback((...args) => {
     const now = Date.now();
     
     // Limpiar llamadas fuera de la ventana
@@ -25,8 +31,8 @@ export const useRateLimit = (fn, limit = 10, windowMs = 1000) => {
     // Registrar la llamada
     calls.current.push(now);
     
-    // Ejecutar la función
-    return fn(...args);
-  };
+    // Ejecutar la función usando la referencia más reciente
+    return fnRef.current(...args);
+  }, [limit, windowMs]);
 };
 

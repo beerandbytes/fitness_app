@@ -56,8 +56,10 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 import GlobalSearch from './components/GlobalSearch';
 import SkipLink from './components/SkipLink';
 import AriaLiveRegion from './components/AriaLiveRegion';
+import ApiLogViewer from './components/ApiLogViewer';
 import { initAnalytics, trackPageView } from './utils/analytics';
 import { useLocation } from 'react-router-dom';
+import { getLogs } from './utils/apiRecorder';
 
 // --- Componente para Proteger Rutas ---
 const ProtectedRoute = ({ children }) => {
@@ -161,6 +163,7 @@ function App() {
   const isCoach = useUserStore((state) => state.isCoach());
   const location = useLocation();
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [apiLogViewerOpen, setApiLogViewerOpen] = useState(false);
 
   // Inicializar analytics al montar
   useEffect(() => {
@@ -172,6 +175,33 @@ function App() {
     trackPageView(location.pathname + location.search);
   }, [location]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+Shift+L to open API log viewer (only in dev mode)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'L') {
+        if (import.meta.env.DEV) {
+          e.preventDefault();
+          setApiLogViewerOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Expose API logs to window for console access
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      window.__API_LOGS__ = {
+        getLogs,
+        open: () => setApiLogViewerOpen(true),
+        close: () => setApiLogViewerOpen(false),
+      };
+    }
+  }, []);
+
   // El componente se renderizará siempre, las rutas se encargan de la vista
   return (
     <ErrorBoundary>
@@ -182,6 +212,7 @@ function App() {
         <OfflineIndicator />
         <PWAInstallPrompt />
         <GlobalSearch open={globalSearchOpen} onOpenChange={setGlobalSearchOpen} />
+        {apiLogViewerOpen && <ApiLogViewer onClose={() => setApiLogViewerOpen(false)} />}
         <ToastContainer />
         <Suspense fallback={<LoadingSpinner />}>
           <main id="main-content" role="main">

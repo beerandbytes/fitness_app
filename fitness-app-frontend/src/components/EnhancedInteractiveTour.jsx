@@ -26,6 +26,16 @@ const EnhancedInteractiveTour = ({
     // Memoizar steps para evitar recreación constante del useEffect
     const stepsString = useMemo(() => JSON.stringify(steps), [steps]);
     const memoizedSteps = useMemo(() => steps, [stepsString]);
+    
+    // Refs para almacenar valores actuales sin causar recreaciones
+    const currentStepRef = useRef(currentStep);
+    const memoizedStepsRef = useRef(memoizedSteps);
+    
+    // Actualizar refs cuando cambian los valores
+    useEffect(() => {
+        currentStepRef.current = currentStep;
+        memoizedStepsRef.current = memoizedSteps;
+    }, [currentStep, memoizedSteps]);
 
     // Verificar si el tour ya fue completado
     useEffect(() => {
@@ -36,6 +46,80 @@ const EnhancedInteractiveTour = ({
             }
         }
     }, [tourId]);
+
+    // Función para actualizar posición usando requestAnimationFrame para mejor rendimiento
+    // Memoizada para evitar recreaciones en cada render
+    const updatePosition = useCallback((force = false) => {
+        if (isUpdatingRef.current && !force) return;
+        
+        // Usar refs para acceder a los valores más recientes sin causar recreaciones
+        const currentSteps = memoizedStepsRef.current;
+        const stepIndex = currentStepRef.current;
+        
+        if (!currentSteps || currentSteps.length === 0) return;
+        
+        const step = currentSteps[stepIndex];
+        if (!step || !step.target) return;
+
+        const currentElement = elementRef.current || (typeof step.target === 'string' 
+            ? document.querySelector(step.target)
+            : step.target);
+            
+        if (currentElement) {
+            elementRef.current = currentElement;
+            isUpdatingRef.current = true;
+            
+            // Cancelar cualquier RAF pendiente
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+            }
+            
+            rafRef.current = requestAnimationFrame(() => {
+                const rect = currentElement.getBoundingClientRect();
+                const newRect = {
+                    left: rect.left + window.scrollX,
+                    top: rect.top + window.scrollY,
+                    width: rect.width,
+                    height: rect.height,
+                };
+                
+                // Solo actualizar si el rect cambió significativamente (más de 10px para evitar micro-updates con animaciones en Docker)
+                setTargetRect(prev => {
+                    if (!prev) {
+                        return newRect;
+                    }
+                    const diff = Math.abs(prev.left - newRect.left) + 
+                                Math.abs(prev.top - newRect.top) + 
+                                Math.abs(prev.width - newRect.width) + 
+                                Math.abs(prev.height - newRect.height);
+                    // Solo actualizar si hay un cambio significativo (10px para evitar micro-updates que causan loops en Docker)
+                    return diff > 10 ? newRect : prev;
+                });
+                isUpdatingRef.current = false;
+            });
+        }
+    }, []);
+
+    // Throttle de eventos de scroll para mejor rendimiento
+    // Memoizado para evitar recreaciones en cada render
+    const handleScroll = useCallback(() => {
+        if (scrollTimeoutRef.current) return;
+        // Throttle más agresivo para evitar loops en Docker
+        scrollTimeoutRef.current = setTimeout(() => {
+            updatePosition(true);
+            scrollTimeoutRef.current = null;
+        }, 100);
+    }, [updatePosition]);
+
+    // Memoizado para evitar recreaciones en cada render
+    const handleWindowResize = useCallback(() => {
+        if (resizeTimeoutRef.current) return;
+        // Solo actualizar en resize real de ventana, con throttle alto para evitar loops
+        resizeTimeoutRef.current = setTimeout(() => {
+            updatePosition(true);
+            resizeTimeoutRef.current = null;
+        }, 500);
+    }, [updatePosition]);
 
     // Encontrar y seguir el elemento objetivo
     useEffect(() => {
@@ -51,64 +135,6 @@ const EnhancedInteractiveTour = ({
             setTargetRect(null);
             return;
         }
-
-        // Función para actualizar posición usando requestAnimationFrame para mejor rendimiento
-        // En Docker, limitamos las actualizaciones para evitar loops infinitos con animaciones
-        const updatePosition = (force = false) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:55',message:'updatePosition called',data:{isUpdating:isUpdatingRef.current,hasElement:!!elementRef.current,force},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-            // #endregion
-            if (isUpdatingRef.current && !force) return;
-            
-            if (!step || !step.target) return;
-
-            const currentElement = elementRef.current || (typeof step.target === 'string' 
-                ? document.querySelector(step.target)
-                : step.target);
-                
-            if (currentElement) {
-                elementRef.current = currentElement;
-                isUpdatingRef.current = true;
-                
-                // Cancelar cualquier RAF pendiente
-                if (rafRef.current) {
-                    cancelAnimationFrame(rafRef.current);
-                }
-                
-                rafRef.current = requestAnimationFrame(() => {
-                    const rect = currentElement.getBoundingClientRect();
-                    const newRect = {
-                        left: rect.left + window.scrollX,
-                        top: rect.top + window.scrollY,
-                        width: rect.width,
-                        height: rect.height,
-                    };
-                    
-                    // Solo actualizar si el rect cambió significativamente (más de 10px para evitar micro-updates con animaciones en Docker)
-                    setTargetRect(prev => {
-                        if (!prev) {
-                            // #region agent log
-                            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:83',message:'setTargetRect first update',data:{newRect},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-                            // #endregion
-                            return newRect;
-                        }
-                        const diff = Math.abs(prev.left - newRect.left) + 
-                                    Math.abs(prev.top - newRect.top) + 
-                                    Math.abs(prev.width - newRect.width) + 
-                                    Math.abs(prev.height - newRect.height);
-                        // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:90',message:'setTargetRect diff check',data:{diff,prev,newRect,willUpdate:diff>10},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                        // #endregion
-                        // Solo actualizar si hay un cambio significativo (10px para evitar micro-updates que causan loops en Docker)
-                        return diff > 10 ? newRect : prev;
-                    });
-                    isUpdatingRef.current = false;
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:92',message:'updatePosition RAF complete',data:{newRect},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-                    // #endregion
-                });
-            }
-        };
 
         let retryCount = 0;
         const maxRetries = 10;
@@ -135,42 +161,14 @@ const EnhancedInteractiveTour = ({
 
         findElement();
 
-        // Throttle de eventos de scroll para mejor rendimiento
-        // En Docker, limitamos las actualizaciones en scroll para evitar loops
-        const handleScroll = () => {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:122',message:'handleScroll triggered',data:{hasTimeout:!!scrollTimeoutRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-            // #endregion
-            if (scrollTimeoutRef.current) return;
-            // Throttle más agresivo para evitar loops en Docker
-            scrollTimeoutRef.current = setTimeout(() => {
-                updatePosition(true);
-                scrollTimeoutRef.current = null;
-            }, 100);
-        };
-
-        const handleWindowResize = () => {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:130',message:'handleWindowResize triggered',data:{hasTimeout:!!resizeTimeoutRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-            // #endregion
-            if (resizeTimeoutRef.current) return;
-            // Solo actualizar en resize real de ventana, con throttle alto para evitar loops
-            resizeTimeoutRef.current = setTimeout(() => {
-                updatePosition(true);
-                resizeTimeoutRef.current = null;
-            }, 500);
-        };
-
         // Solo escuchar eventos de scroll y resize de ventana, no cambios de layout del elemento
         window.addEventListener('scroll', handleScroll, { passive: true });
         window.addEventListener('resize', handleWindowResize, { passive: true });
         
         // Detectar si el usuario está escribiendo en un input y pausar actualizaciones
+        // Memoizado para evitar recreaciones
         const handleFocus = (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:175',message:'input focused, pausing tour updates',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                // #endregion
                 // Pausar actualizaciones mientras el usuario escribe
                 isUpdatingRef.current = true;
             }
@@ -178,9 +176,6 @@ const EnhancedInteractiveTour = ({
         
         const handleBlur = (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'EnhancedInteractiveTour.jsx:183',message:'input blurred, resuming tour updates',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                // #endregion
                 // Reanudar actualizaciones después de un breve delay
                 setTimeout(() => {
                     isUpdatingRef.current = false;
@@ -218,7 +213,7 @@ const EnhancedInteractiveTour = ({
             document.removeEventListener('focusout', handleBlur, true);
             isUpdatingRef.current = false;
         };
-    }, [isActive, currentStep, memoizedSteps]); // Usar memoizedSteps en lugar de steps
+    }, [isActive, currentStep, memoizedSteps, updatePosition, handleScroll, handleWindowResize]); // Incluir funciones memoizadas en dependencias
 
     // ELIMINADO: useEffect que escuchaba targetRect causaba loops infinitos
     // Ya no necesitamos este efecto ya que targetRect solo se usa para renderizar

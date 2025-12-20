@@ -30,12 +30,6 @@ const ModernNavbar = React.memo(() => {
     // Obtener la primera letra del nombre de la marca para el logo
     const brandFirstLetter = brandSettings.brand_name?.charAt(0).toUpperCase() || 'F';
 
-    // Debug: Log para verificar que el navbar se renderiza
-    useEffect(() => {
-        // Logging removido - usar logger si es necesario para debugging
-        // En desarrollo, el logger ya maneja los niveles apropiados
-    }, [user, isCoach, isAdmin, location.pathname]);
-
     // Cerrar el menú móvil cuando cambia la ruta
     useEffect(() => {
         // Usar setTimeout para evitar setState síncrono en efecto

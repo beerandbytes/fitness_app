@@ -28,11 +28,17 @@ const ValidatedInput = ({
   const isProcessingRef = useRef(false);
   // Usar ref para almacenar la función validator y evitar recreaciones innecesarias
   const validatorRef = useRef(validator);
+  // Usar ref para almacenar onValidation callback y evitar recreaciones innecesarias
+  const onValidationRef = useRef(onValidation);
+  // Usar ref para almacenar isValid y evitar dependencias innecesarias
+  const isValidRef = useRef(isValid);
 
-  // Actualizar el ref de validator cuando cambie
+  // Actualizar los refs cuando cambien
   useEffect(() => {
     validatorRef.current = validator;
-  }, [validator]);
+    onValidationRef.current = onValidation;
+    isValidRef.current = isValid;
+  }, [validator, onValidation, isValid]);
 
   useEffect(() => {
     // #region agent log
@@ -45,7 +51,8 @@ const ValidatedInput = ({
     }
     
     // Prevenir ejecución si el valor no cambió realmente Y el resultado de validación es el mismo
-    if (lastValidatedValueRef.current === value && isValid === lastValidationResultRef.current.valid) {
+    // Usar ref para evitar dependencia de isValid
+    if (lastValidatedValueRef.current === value && isValidRef.current === lastValidationResultRef.current.valid) {
       return;
     }
     
@@ -66,8 +73,8 @@ const ValidatedInput = ({
         setIsValid(null);
         setMessage('');
         lastValidationResultRef.current = { valid: null, message: '' };
-        if (onValidation) {
-          onValidation(null, '');
+        if (onValidationRef.current) {
+          onValidationRef.current(null, '');
         }
         isProcessingRef.current = false;
         // #region agent log
@@ -90,8 +97,8 @@ const ValidatedInput = ({
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/5f3c2f49-c6a0-487b-84bc-7e6565424478',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ValidatedInput.jsx:68',message:'validation result',data:{value,isValid:result.valid,hasMessage:!!result.message,messageLength:result.message?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
-        if (onValidation) {
-          onValidation(result.valid, result.message);
+        if (onValidationRef.current) {
+          onValidationRef.current(result.valid, result.message);
         }
       }, 150);
     } else {
@@ -104,9 +111,8 @@ const ValidatedInput = ({
         validationTimeoutRef.current = null;
       }
     };
-    // Remover validator de las dependencias y usar validatorRef.current en su lugar
-    // onValidation puede cambiar en cada render, pero es una función callback
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Usar refs para validator y onValidation para evitar dependencias inestables
+    // isValid se maneja mediante ref para evitar dependencia circular
   }, [value, isTouched]);
 
   const handleBlur = () => {

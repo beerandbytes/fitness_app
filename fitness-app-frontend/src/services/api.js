@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { recordRequest, recordResponse, recordError } from '../utils/apiRecorder';
 
 // URL del backend - Configurable mediante variable de entorno para producción
 // Si VITE_API_URL no está definida, usa ruta relativa (funciona con proxy de nginx)
@@ -20,6 +21,13 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`; 
   }
+  
+  // Record request start time for duration calculation
+  config._requestStartTime = Date.now();
+  
+  // Record the request
+  recordRequest(config);
+  
   return config;
 }, (error) => {
   return Promise.reject(error);
@@ -28,8 +36,22 @@ api.interceptors.request.use((config) => {
 // Interceptor para manejar errores 401/403 y refrescar token automáticamente
 // También implementa retry automático para errores de red y 5xx
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Record successful response
+    const duration = response.config._requestStartTime 
+      ? Date.now() - response.config._requestStartTime 
+      : null;
+    recordResponse(response.config, response, duration);
+    return response;
+  },
   async (error) => {
+    // Record error response
+    const duration = error.config?._requestStartTime 
+      ? Date.now() - error.config._requestStartTime 
+      : null;
+    if (error.config) {
+      recordError(error.config, error, duration);
+    }
     const originalRequest = error.config;
     const isAuthError = error.response?.status === 401 || error.response?.status === 403;
     const isProfileEndpoint = originalRequest?.url?.includes('/profile');

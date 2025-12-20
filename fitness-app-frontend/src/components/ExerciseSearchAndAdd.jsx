@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import VirtualizedList from './VirtualizedList';
 import OptimizedImage from './OptimizedImage';
@@ -89,46 +89,8 @@ const ExerciseSearchAndAdd = ({ onLogUpdated, onExerciseSelect, selectedExercise
     }, [selectedExercise]);
 
 
-    // Búsqueda de ejercicios con debounce y rate limiting
-    useEffect(() => {
-        if (localSelectedExercise) {
-            setSearchResults([]);
-            return;
-        }
-        
-        if (debouncedSearchQuery.length >= 2) {
-            rateLimitedSearch(debouncedSearchQuery);
-        } else {
-            setSearchResults([]);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedSearchQuery, localSelectedExercise]);
-
-    // Cargar GIF/video cuando se selecciona un ejercicio
-    useEffect(() => {
-        if (localSelectedExercise && localSelectedExercise.name) {
-            if (localSelectedExercise.gif_url || localSelectedExercise.video_url) {
-                // Filtrar URLs de Giphy antes de establecer
-                const gifUrl = localSelectedExercise.gif_url;
-                const videoUrl = localSelectedExercise.video_url;
-                
-                const filteredGifUrl = gifUrl && !gifUrl.toLowerCase().includes('giphy') ? gifUrl : null;
-                const filteredVideoUrl = videoUrl && !videoUrl.toLowerCase().includes('giphy') ? videoUrl : null;
-                
-                setGifUrl(filteredGifUrl);
-                setVideoUrl(filteredVideoUrl);
-                setLoadingGif(false);
-            } else {
-                loadExerciseMedia(localSelectedExercise.name);
-            }
-        } else {
-            setGifUrl(null);
-            setVideoUrl(null);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [localSelectedExercise?.exercise_id]);
-
-    const loadExerciseMedia = async (exerciseName) => {
+    // Memoizar loadExerciseMedia para evitar recreaciones
+    const loadExerciseMedia = useCallback(async (exerciseName) => {
         if (!exerciseName) {
             setGifUrl(null);
             setVideoUrl(null);
@@ -155,7 +117,7 @@ const ExerciseSearchAndAdd = ({ onLogUpdated, onExerciseSelect, selectedExercise
         } finally {
             setLoadingGif(false);
         }
-    };
+    }, []);
 
     const handleExerciseSelect = (exercise) => {
         setSearchResults([]);

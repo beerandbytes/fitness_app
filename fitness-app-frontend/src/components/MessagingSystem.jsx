@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Paperclip, X } from 'lucide-react';
 import api from '../services/api';
 import useToastStore from '../stores/useToastStore';
@@ -18,22 +18,13 @@ const MessagingSystem = ({ recipientId, recipientEmail, onClose }) => {
   const user = useUserStore((state) => state.user);
   const toast = useToastStore();
 
-  useEffect(() => {
-    fetchMessages();
-    // En producción, aquí se establecería la conexión WebSocket
-    // const ws = new WebSocket(`ws://api/messages/${recipientId}`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipientId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
+  // Memoizar scrollToBottom para evitar recreaciones
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
-  const fetchMessages = async () => {
+  // Memoizar fetchMessages para evitar recreaciones
+  const fetchMessages = useCallback(async () => {
     try {
       setLoading(true);
       // Nota: Este endpoint necesita ser implementado en el backend
@@ -48,7 +39,17 @@ const MessagingSystem = ({ recipientId, recipientEmail, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [recipientId, toast]);
+
+  useEffect(() => {
+    fetchMessages();
+    // En producción, aquí se establecería la conexión WebSocket
+    // const ws = new WebSocket(`ws://api/messages/${recipientId}`);
+  }, [fetchMessages]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();

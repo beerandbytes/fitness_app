@@ -206,8 +206,7 @@ const FoodSearchAndAdd = React.memo(({ log, onLogUpdated, date }) => {
         if (!selectedFood && debouncedSearchQuery.length >= 2) {
             rateLimitedSearch(debouncedSearchQuery);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedSearchQuery, rateLimitedSearch]);
+    }, [debouncedSearchQuery, rateLimitedSearch, selectedFood]);
 
     // Función para seleccionar alimento desde sugerencia común o búsqueda
     const handleSelectFood = async (food) => {

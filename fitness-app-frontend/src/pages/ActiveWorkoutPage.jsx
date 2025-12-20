@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WorkoutTimer from '../components/WorkoutTimer';
 import api from '../services/api';
@@ -43,7 +43,8 @@ const ActiveWorkoutPage = () => {
     const currentExerciseId = routine?.exercises?.[currentExerciseIndex]?.exercise_id;
     const routineExercisesLength = routine?.exercises?.length;
 
-    const fetchRoutineDetails = async () => {
+    // Memoizar fetchRoutineDetails para evitar recreaciones y stale closures
+    const fetchRoutineDetails = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get(`/routines/${routineId}`);
@@ -56,7 +57,7 @@ const ActiveWorkoutPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [routineId, navigate, toast]);
 
     // Inicializar Web Speech API para voz
     useEffect(() => {
@@ -100,8 +101,7 @@ const ActiveWorkoutPage = () => {
             if (restIntervalRef.current) clearInterval(restIntervalRef.current);
             if (exerciseIntervalRef.current) clearInterval(exerciseIntervalRef.current);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [routineId]);
+    }, [fetchRoutineDetails]);
 
     // Cargar historial del ejercicio para sugerencias
     // Usar useRef para acceder al valor más reciente de routine sin causar recreaciones
@@ -110,18 +110,9 @@ const ActiveWorkoutPage = () => {
         routineRef.current = routine;
     }, [routine]);
 
-    useEffect(() => {
-        // Usar valores primitivos como dependencias para evitar bucles infinitos
-        if (currentExerciseId && currentExerciseIndex >= 0) {
-            const currentRoutine = routineRef.current;
-            if (currentRoutine && currentRoutine.exercises && currentRoutine.exercises[currentExerciseIndex]) {
-                loadExerciseHistory(currentExerciseId);
-            }
-        }
-    }, [currentExerciseId, currentExerciseIndex]);
-
     // Cargar historial del ejercicio
-    const loadExerciseHistory = async (exerciseId) => {
+    // Memoizar para evitar recreaciones y stale closures
+    const loadExerciseHistory = useCallback(async (exerciseId) => {
         try {
             const response = await api.get(`/workouts?exercise_id=${exerciseId}&limit=1`);
             if (response.data.workouts && response.data.workouts.length > 0) {
@@ -148,7 +139,17 @@ const ActiveWorkoutPage = () => {
         } catch (error) {
             logger.error('Error al cargar historial:', error);
         }
-    };
+    }, [currentExerciseIndex]);
+
+    useEffect(() => {
+        // Usar valores primitivos como dependencias para evitar bucles infinitos
+        if (currentExerciseId && currentExerciseIndex >= 0) {
+            const currentRoutine = routineRef.current;
+            if (currentRoutine && currentRoutine.exercises && currentRoutine.exercises[currentExerciseIndex]) {
+                loadExerciseHistory(currentExerciseId);
+            }
+        }
+    }, [currentExerciseId, currentExerciseIndex, loadExerciseHistory]);
 
     const playSound = () => {
         if (audioRef.current) {
