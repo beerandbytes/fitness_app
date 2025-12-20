@@ -19,7 +19,8 @@ if (!connectionString) {
 // - min: 2-5 (no mantener demasiadas conexiones inactivas)
 const pool = new Pool({
     connectionString: connectionString,
-    max: parseInt(process.env.DB_POOL_MAX || '20', 10), // Máximo de conexiones
+    // En Docker interno a veces no se debe forzar SSL aunque sea producción
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     min: parseInt(process.env.DB_POOL_MIN || '5', 10), // Mínimo de conexiones a mantener
     idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000', 10), // 30s - cerrar conexiones inactivas
     connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '2000', 10), // 2s - timeout de conexión
@@ -40,12 +41,12 @@ pool.on('error', (err, client) => {
         stack: err.stack,
         code: err.code,
     });
-    
+
     // Si el cliente está definido, liberarlo del pool
     if (client) {
         client.release();
     }
-    
+
     // Si es un error de conexión perdida, intentar reconectar
     if (err.code === 'ECONNRESET' || err.code === 'EPIPE' || err.code === 'ETIMEDOUT') {
         logger.warn('Conexión perdida detectada. El pool intentará reconectar automáticamente.');
@@ -54,7 +55,7 @@ pool.on('error', (err, client) => {
 
 pool.on('acquire', (client) => {
     logger.debug('Conexión adquirida del pool');
-    
+
     // Advertir si el pool está cerca de su capacidad máxima
     if (pool.totalCount >= pool.options.max * 0.8) {
         logger.warn(`Pool cerca de su capacidad máxima: ${pool.totalCount}/${pool.options.max} conexiones`);

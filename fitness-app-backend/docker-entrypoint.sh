@@ -9,8 +9,6 @@ npm run db:migrate 2>&1 || {
     node scripts/fix_exercises_schema.js 2>&1 || echo "❌ El parche manual también falló."
 }
 
-    node scripts/fix_exercises_schema.js 2>&1 || echo "❌ El parche manual también falló."
-}
 
 # ESPERAR a que los cambios de esquema se propaguen
 # Esto es CRÍTICO: verifica que la columna 'name_es' realmente exista antes de insertar datos

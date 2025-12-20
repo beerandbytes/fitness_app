@@ -17,6 +17,8 @@ if (!connectionString) {
 // 2. Crear la instancia de Drizzle (sin el esquema, solo para migrar)
 const pool = new Pool({
     connectionString: connectionString,
+    // En Docker interno a veces no se debe forzar SSL aunque sea producción
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     max: 1 // Usamos una conexión mínima para la migración
 });
 
@@ -38,7 +40,7 @@ async function runMigrations() {
         // Manejar errores específicos de tablas/columnas/constraints ya existentes
         const errorCode = error.cause?.code;
         const errorMessage = error.cause?.message || error.message;
-        
+
         if (errorCode === '42P07') {
             // Error: relación (tabla) ya existe
             console.warn("⚠️  Advertencia: La tabla ya existe. Esto puede ser normal si la migración ya se ejecutó anteriormente.");
@@ -72,7 +74,7 @@ async function runMigrations() {
         }
     } finally {
         // Cierra la conexión después de terminar
-        await pool.end(); 
+        await pool.end();
         console.log("Conexión cerrada.");
     }
 }
