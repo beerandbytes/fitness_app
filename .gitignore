@@ -69,6 +69,10 @@ docs/.docusaurus/
 docs/build/
 docs/node_modules/
 
+# Temporary documentation files
+md/*.md
+!md/README.md
+
 # Backend specific
 fitness-app-backend/logs/
 fitness-app-backend/coverage/
